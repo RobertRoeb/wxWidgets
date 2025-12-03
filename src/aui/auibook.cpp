@@ -1909,11 +1909,17 @@ public:
         m_tabCtrlHeight = h;
     }
 
-    // As we don't have a valid HWND, the base class version doesn't work for
-    // this window, so override it to return the appropriate DPI.
+    // As we don't have a valid HWND, base class implementations of these
+    // functions don't work for this window, so override them to forward to the
+    // real window.
     wxSize GetDPI() const override
     {
         return m_tabs->GetDPI();
+    }
+
+    wxLayoutDirection GetLayoutDirection() const override
+    {
+        return m_tabs->GetLayoutDirection();
     }
 
 protected:
