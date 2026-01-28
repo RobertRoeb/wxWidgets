@@ -4502,7 +4502,7 @@ wxWidgetImpl* wxWidgetImpl::CreateUserPane( wxWindowMac* wxpeer, wxWindowMac* WX
             v = [[wxNSViewWithDrawing alloc] initWithFrame:r];
         else
         {
-            if (wxpeer->HasFlag(wxTRANSPARENT_WINDOW))
+            if (wxpeer->HasFlag(wxTRANSLUCENT_WINDOW))
             {
                 wxNSVisualEffectView *visualEffectView = [[wxNSVisualEffectView alloc] initWithFrame:r];
 
@@ -4511,7 +4511,6 @@ wxWidgetImpl* wxWidgetImpl::CreateUserPane( wxWindowMac* wxpeer, wxWindowMac* WX
                 visualEffectView.state = NSVisualEffectStateActive;
                 visualEffectView.wantsLayer = YES;
                 visualEffectView.layer.cornerRadius = 10.0;
-
                 visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
                 wxNSView *wxnsview = [[wxNSView alloc] initWithFrame:r];
@@ -4521,9 +4520,8 @@ wxWidgetImpl* wxWidgetImpl::CreateUserPane( wxWindowMac* wxpeer, wxWindowMac* WX
             }
             else
             {            
-                v = [[wxNSView alloc] initWithFrame:r];
-                // We can change that later on the fly to wxNSViewWithDrawing incl drawRect
-                // object_setClass( v, [wxNSViewWithDrawing class] );
+                wxNSView * wxnsview = [[wxNSView alloc] initWithFrame:r];
+                v = wxnsview;
             }
 
         }
