@@ -843,6 +843,12 @@ wxAuiDockArt* wxAuiManager::GetArtProvider() const
     return m_art;
 }
 
+wxSize wxAuiManager::GetMinPaneSize() const
+{
+    // This is pretty arbitrary, should we make it configurable?
+    return wxWindow::FromDIP(wxSize(10, 10), m_frame);
+}
+
 void wxAuiManager::AllowDocksForMinPanes(int directions)
 {
     wxCHECK_RET( directions, "Must specify at least one direction" );
@@ -2571,6 +2577,8 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
                 if (pane_size == wxDefaultSize)
                     pane_size = pane.window->GetSize();
 
+                pane_size.IncTo(GetMinPaneSize());
+
                 if (dock.IsHorizontal())
                     size = wxMax(pane_size.y, size);
                 else
@@ -2613,9 +2621,6 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
                 size = wxMin(size, max_dock_y_size);
             else
                 size = wxMin(size, max_dock_x_size);
-
-            // absolute minimum size for a dock is 10 pixels
-            size = wxMax(size, m_frame->FromDIP(10));
 
             dock.size = size;
         }
