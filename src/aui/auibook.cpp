@@ -3059,6 +3059,8 @@ void wxAuiNotebook::UnsplitAll()
         RemoveEmptyTabFrames();
 
         DoSizing();
+
+        UpdateHintWindowSize();
     }
 }
 
