@@ -2517,6 +2517,14 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
             if ( dock->size == 0 )
                 dock->size = p.dock_size;
         }
+
+        if ( !p.IsDocked() || !p.IsShown() )
+        {
+            // remove the pane from any existing docks
+            RemovePaneFromDocks(docks, p);
+            continue;
+        }
+
         if ( !dock )
         {
             // dock was not found, so we need to create a new one
@@ -2530,22 +2538,13 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
         }
 
 
-        if (p.IsDocked() && p.IsShown())
-        {
-            // remove the pane from any existing docks except this one
-            RemovePaneFromDocks(docks, p, dock);
+        // remove the pane from any existing docks except this one
+        RemovePaneFromDocks(docks, p, dock);
 
-            // pane needs to be added to the dock,
-            // if it doesn't already exist
-            if (!FindPaneInDock(*dock, p.window))
-                dock->panes.Add(&p);
-        }
-        else
-        {
-            // remove the pane from any existing docks
-            RemovePaneFromDocks(docks, p);
-        }
-
+        // pane needs to be added to the dock,
+        // if it doesn't already exist
+        if (!FindPaneInDock(*dock, p.window))
+            dock->panes.Add(&p);
     }
 
     // remove any empty docks
