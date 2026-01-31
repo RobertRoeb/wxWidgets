@@ -2270,9 +2270,7 @@ void wxAuiManager::LayoutAddPane(wxSizer* cont,
 
     if (min_size != wxDefaultSize)
     {
-        vert_pane_sizer->SetItemMinSize(
-                        vert_pane_sizer->GetChildren().GetCount()-1,
-                        min_size.x, min_size.y);
+        sizer_item->SetMinSize(min_size);
     }
 
 
