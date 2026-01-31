@@ -4590,22 +4590,6 @@ bool wxAuiManager::DoEndResizeAction(wxMouseEvent& event)
         int available_width = client_size.GetWidth() - used_width;
         int available_height = client_size.GetHeight() - used_height;
 
-
-#if wxUSE_STATUSBAR
-        // if there's a status control, the available
-        // height decreases accordingly
-        if (wxDynamicCast(m_frame, wxFrame))
-        {
-            wxFrame* frame = static_cast<wxFrame*>(m_frame);
-            wxStatusBar* status = frame->GetStatusBar();
-            if (status)
-            {
-                wxSize status_client_size = status->GetClientSize();
-                available_height -= status_client_size.GetHeight();
-            }
-        }
-#endif
-
         const wxRect& rect = m_actionPart->dock->rect;
 
         wxPoint new_pos(event.m_x - m_actionOffset.x,
