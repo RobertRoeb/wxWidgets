@@ -4650,6 +4650,8 @@ wxAuiNotebook::LoadLayout(const wxString& name,
     if ( activeInMainTab )
         m_curPage = m_tabs.GetIdxFromWindow(activeInMainTab);
 
+    UpdateHintWindowSize();
+
     m_mgr.Update();
 }
 
