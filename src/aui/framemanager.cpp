@@ -2482,6 +2482,10 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
             // the contained windows may have been resized
             dock.size = 0;
         }
+        //else: non-fixed docks must keep their size to allow resizing them
+        // interactively, if we reset their size too here, they would always
+        // have the size determined by their contents and drag-resizing them
+        // wouldn't work
     }
 
 
