@@ -453,6 +453,9 @@ public:
     void SetArtProvider(wxAuiDockArt* artProvider);
     wxAuiDockArt* GetArtProvider() const;
 
+    // Return the minimum size for any pane.
+    wxSize GetMinPaneSize() const;
+
     // Change the sides where docks for minimized panes can be created.
     // Must include one or more of wxLEFT, wxRIGHT, wxTOP, wxBOTTOM and must
     // currently be called before there any minimized panes.
