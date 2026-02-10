@@ -22,8 +22,13 @@ inline wxColour GetLinkColour()
     // it doesn't stand out enough in dark mode, so choose "light sky blue"
     // colour for the links in dark mode instead (this is a rather arbitrary
     // choice, but there doesn't seem to be any standard one).
+
+#ifdef __WXMAC__
+    return wxSystemSettings::GetColour( wxSYS_COLOUR_HOTLIGHT );
+#else
     return wxSystemSettings::SelectLightDark(wxColour(0x00, 0x00, 0xee),
                                              wxColour(0x87, 0xce, 0xfa));
+#endif
 }
 
 } // namespace wxPrivate
