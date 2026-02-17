@@ -3707,23 +3707,29 @@ if test "$wxUSE_SHARED" = "yes"; then
             DYLIB_RPATH_POSTLINK="${HOST_PREFIX}install_name_tool -id \$@ \$@"
             cat <<EOF >change-install-names
 #!/bin/sh
-libnames=\$(cd lib ; ls -1 libwx*${WX_RELEASE}.dylib)
+set -e
+[[ -z "\${WXDEBUG_X}" ]] || set -x
+destdir=\$1
+libdir=\$2
+bindir=\$3
+build_libdir=\$4
+libnames=\$(cd \${build_libdir}; printf '%s\n' libwx*${WX_RELEASE}.dylib)
 changes=''
-for dep in \${libnames} ; do
-    target=\$(readlink -f \${4}/\${dep})
-    changes="\${changes} -change \${target} \${3}/\${dep}"
+for libname in \${libnames} ; do
+    target=\$(realpath \${build_libdir}/\${libname})
+    changes="\${changes} -change \${target} \${libdir}/\$(basename \${target})"
 done
-for i in \${libnames} ; do
-    lib=\$(readlink -f \${1}/\${i})
-    ${HOST_PREFIX}install_name_tool \${changes} -id \${3}/\${i} \${lib}
+for libname in \${libnames} ; do
+    target=\$(realpath \${build_libdir}/\${libname})
+    ${HOST_PREFIX}install_name_tool \${changes} -id \${libdir}/\${libname} \${destdir}\${libdir}/\$(basename \${target})
 done
 
-if test -f "\${2}/wxrc-${WX_RELEASE}" ; then
-    ${HOST_PREFIX}install_name_tool \${changes} \${2}/wxrc-${WX_RELEASE}
+if test -f \${destdir}\${bindir}/wxrc-${WX_RELEASE} ; then
+    ${HOST_PREFIX}install_name_tool \${changes} \${destdir}\${bindir}/wxrc-${WX_RELEASE}
 fi
 EOF
             chmod +x change-install-names
-            DYLIB_RPATH_INSTALL="\$(wx_top_builddir)/change-install-names \${DESTDIR}\${libdir} \${DESTDIR}\${bindir} \${libdir} \$(wx_top_builddir)/lib"
+            DYLIB_RPATH_INSTALL="\$(wx_top_builddir)/change-install-names \"\${DESTDIR}\" \${libdir} \${bindir} \$(wx_top_builddir)/lib"
         fi
 
         dnl the HEADER_PAD_OPTION is required by some wx samples to avoid the error:
