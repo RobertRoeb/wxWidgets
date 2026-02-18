@@ -22,6 +22,7 @@
 #ifndef WX_PRECOMP
     #include "wx/msw/wrapcctl.h" // include <commctrl.h> "properly"
     #include "wx/app.h"
+    #include "wx/dcclient.h"
     #include "wx/dcmemory.h"
 #endif
 
@@ -245,10 +246,8 @@ void wxSpinButton::OnPaint(wxPaintEvent& event)
         bmp = wxBitmap(image);
 #endif // wxUSE_IMAGE
 
-        PAINTSTRUCT ps;
-        wxDCTemp dc(::BeginPaint(GetHwnd(), &ps), size);
+        wxPaintDC dc(this);
         dc.DrawBitmap(bmp, 0, 0);
-        ::EndPaint(GetHwnd(), &ps);
     }
     else
     {
