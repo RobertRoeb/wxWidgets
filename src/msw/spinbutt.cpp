@@ -134,6 +134,12 @@ bool wxSpinButton::Create(wxWindow *parent,
     SubclassWin(m_hWnd);
 
     Bind(wxEVT_PAINT, &wxSpinButton::OnPaint, this);
+    Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent& event)
+    {
+        // Do nothing in dark mode, the background will be erased in OnPaint().
+        if ( !wxMSWDarkMode::IsActive() )
+            event.Skip();
+    });
 
     SetInitialSize(size);
 
