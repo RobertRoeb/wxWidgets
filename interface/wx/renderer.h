@@ -529,6 +529,8 @@ public:
         @c wxART_HELP and @c wxART_CLOSE (but not any other title bar buttons
         and not for any state but normal, i.e. not pressed and not current one).
 
+        @note Also available under wxQt (starting with wxWidgets 3.3.2)
+
         The presence of this function is indicated by @c
         wxHAS_DRAW_TITLE_BAR_BITMAP symbol being defined.
 
