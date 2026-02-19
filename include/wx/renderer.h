@@ -42,7 +42,8 @@ class WXDLLIMPEXP_FWD_CORE wxWindow;
 #endif
 
 // only MSW and OS X currently provides DrawTitleBarBitmap() method
-#if defined(__WXMSW__) || (defined(__WXMAC__) && wxUSE_LIBPNG && wxUSE_IMAGE)
+#if defined(__WXMSW__) || (defined(__WXMAC__) && wxUSE_LIBPNG && wxUSE_IMAGE) || \
+    defined(__WXQT__)
     #define wxHAS_DRAW_TITLE_BAR_BITMAP
 #endif
 
