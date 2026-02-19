@@ -81,6 +81,16 @@ wxString wxGetStockLabel(wxWindowID id, long flags = wxSTOCK_WITH_MNEMONIC);
 
 ///@}
 
+/**
+    Used with wxGetStockHelpString() to specify the context in which help
+    string is used.
+ */
+enum wxStockHelpStringClient
+{
+    /// Help string to use for menu items.
+    wxSTOCK_MENU
+};
+
 /** @addtogroup group_funcmacro_misc */
 ///@{
 
