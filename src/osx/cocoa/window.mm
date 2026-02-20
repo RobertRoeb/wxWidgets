@@ -2851,11 +2851,6 @@ wxWidgetImpl( peer, flags )
     if ( !peer->IsShown() )
         SetVisibility(false);
 
-    // gc aware handling
-    if ( m_osxView )
-        CFRetain(m_osxView);
-    [m_osxView release];
-
     if ( IsUserPane() )
         ClipsToBounds(true);
 }
@@ -2892,11 +2887,10 @@ wxWidgetCocoaImpl::~wxWidgetCocoaImpl()
         if ( sv != nil )
             [m_osxView removeFromSuperview];
     }
-    // gc aware handling
-    if ( m_osxView )
-        CFRelease(m_osxView);
 
     wxCocoaGestures::EraseForObject(this);
+
+    [m_osxView release];
 }
 
 void wxWidgetCocoaImpl::BeginNativeKeyDownEvent( NSEvent* event )
@@ -4436,6 +4430,7 @@ void wxWidgetCocoaImpl::UseClippingView()
             m_osxClipView = [[wxNSClipView alloc] initWithFrame: m_osxView.bounds];
             [(NSClipView*)m_osxClipView setDrawsBackground: NO];
             [m_osxView addSubview:m_osxClipView];
+            [m_osxClipView release];
 
             // add tracking for this clipview as well
 
