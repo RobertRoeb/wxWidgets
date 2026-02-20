@@ -529,7 +529,7 @@ TEST_CASE("BitmapBundle::ArtProvider", "[bmpbundle][art]")
     // client for which GetNativeSizeHint() of the native art provider returns
     // wxDefaultSize.
     const wxArtClient artClient =
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || defined(__WXQT__)
         wxART_TOOLBAR
 #else
         wxART_LIST
