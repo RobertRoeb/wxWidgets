@@ -187,6 +187,8 @@
        (cairo_t* cr, double *dx, double* dy), (cr, dx, dy) ) \
     m( cairo_surface_mark_dirty, \
        (cairo_surface_t* surface), (surface)) \
+    m( cairo_surface_get_device_scale, \
+       (cairo_surface_t *surface, double *x_scale, double *y_scale), (surface, x_scale, y_scale)) \
     m( cairo_surface_set_device_offset, \
        (cairo_surface_t* surface, double x_offset, double y_offset), (surface, x_offset, y_offset) )
 
