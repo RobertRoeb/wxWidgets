@@ -639,9 +639,10 @@ public:
 
         @param insideWidth
             The width of the inner scroll zone in pixels. If this parameter is
-            set to either 0 or ::wxDefaultCoord, there is no inner scroll zone
+            set to 0, there is no inner scroll zone
             and autoscrolling may be triggered only when the mouse is outside
-            of the window (unless it is disabled too).
+            of the window (unless it is disabled too).  (Negative values,
+            including ::wxDefaultCoord, are forbidden.)
 
         @since 3.3.2
     */

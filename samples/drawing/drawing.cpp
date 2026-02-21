@@ -274,20 +274,25 @@ public:
 
     void OnAutoscrollOuter(wxCommandEvent& WXUNUSED(event))
     {
-        m_canvas->SetInnerScrollZone(wxDefaultCoord);
-        m_canvas->SetOuterScrollZone(wxDefaultCoord);
+        m_outerScrollEnabled = false;
+        m_canvas->DisableAutoScrollOutside();
+    }
+
+    void OnAutoscrollOuterUpdateUI(wxUpdateUIEvent& event)
+    {
+        event.Check(m_outerScrollEnabled);
+        event.Enable(m_outerScrollEnabled);
     }
 
     void OnAutoscrollInner(wxCommandEvent& WXUNUSED(event))
     {
-        m_canvas->SetInnerScrollZone(FromDIP(16));
-        m_canvas->SetOuterScrollZone(0);
+        m_innerScrollWidth = FromDIP(16) - m_innerScrollWidth;
+        m_canvas->EnableAutoScrollInside(m_innerScrollWidth);
     }
 
-    void OnAutoscrollDisable(wxCommandEvent& WXUNUSED(event))
+    void OnAutoscrollInnerUpdateUI(wxUpdateUIEvent& event)
     {
-        m_canvas->SetInnerScrollZone(0);
-        m_canvas->SetOuterScrollZone(0);
+        event.Check(m_innerScrollWidth != 0);
     }
 
     void OnBuffer(wxCommandEvent& event);
@@ -332,6 +337,9 @@ public:
     MyCanvas   *m_canvas;
     wxMenuItem *m_menuItemUseDC;
 private:
+    bool        m_outerScrollEnabled = true;
+    int         m_innerScrollWidth = 0;
+
     // any class wishing to process wxWidgets events must use this macro
     wxDECLARE_EVENT_TABLE();
 };
@@ -394,7 +402,6 @@ enum
 #endif
     File_AutoscrollOuter,
     File_AutoscrollInner,
-    File_AutoscrollDisable,
     File_Copy,
     File_Save,
 
@@ -2543,8 +2550,9 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
     EVT_UPDATE_UI (File_AntiAliasing, MyFrame::OnAntiAliasingUpdateUI)
 #endif // wxUSE_GRAPHICS_CONTEXT
     EVT_MENU      (File_AutoscrollOuter, MyFrame::OnAutoscrollOuter)
+    EVT_UPDATE_UI (File_AutoscrollOuter, MyFrame::OnAutoscrollOuterUpdateUI)
     EVT_MENU      (File_AutoscrollInner, MyFrame::OnAutoscrollInner)
-    EVT_MENU      (File_AutoscrollDisable, MyFrame::OnAutoscrollDisable)
+    EVT_UPDATE_UI (File_AutoscrollInner, MyFrame::OnAutoscrollInnerUpdateUI)
 
     EVT_MENU      (File_Buffer,   MyFrame::OnBuffer)
     EVT_MENU      (File_Copy,     MyFrame::OnCopy)
@@ -2645,9 +2653,8 @@ MyFrame::MyFrame(const wxString& title)
             ->Check();
 #endif
     menuFile->AppendSeparator();
-    menuFile->AppendRadioItem(File_AutoscrollOuter, "&Outer Scroll Zone", "Autoscroll zone outside window");
-    menuFile->AppendRadioItem(File_AutoscrollInner, "&Inner Scroll Zone", "Autoscroll zone inside window");
-    menuFile->AppendRadioItem(File_AutoscrollDisable, "Disab&le AutoScroll Zone", "Disable Autoscroll");
+    menuFile->AppendCheckItem(File_AutoscrollOuter, "&Outer Scroll Zone", "Autoscroll zone outside window");
+    menuFile->AppendCheckItem(File_AutoscrollInner, "&Inner Scroll Zone", "Autoscroll zone inside window");
     menuFile->AppendSeparator();
 #if wxUSE_METAFILE && defined(wxMETAFILE_IS_ENH)
     menuFile->Append(File_Copy, "Copy to clipboard");

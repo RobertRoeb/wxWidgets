@@ -710,19 +710,17 @@ void wxScrollHelperBase::DoPrepareReadOnlyDC(wxReadOnlyDC& dc)
 }
 
 // see scrolwin.h for description
-void wxScrollHelperBase::SetInnerScrollZone(wxCoord innerZone)
+void wxScrollHelperBase::EnableAutoScrollInside(wxCoord insideWidth)
 {
-    wxCHECK_RET( innerZone == wxDefaultCoord || innerZone >= 0,
-            "arg should be non-negative or wxDefaultCoord");
-    m_innerScrollZone = innerZone;
+    wxCHECK_RET( insideWidth >= 0,
+            "arg should be non-negative");
+    m_innerScrollWidth = insideWidth;
 }
 
 // see scrolwin.h for description
-void wxScrollHelperBase::SetOuterScrollZone(wxCoord outerZone)
+void wxScrollHelperBase::DisableAutoScrollOutside()
 {
-    wxCHECK_RET( outerZone == wxDefaultCoord || outerZone >= 0,
-            "arg should be non-negative or wxDefaultCoord");
-    m_outerScrollZone = outerZone;
+    m_outerScrollEnabled = false;
 }
 
 // check whether clientPt triggers autoscrolling in each direction
@@ -732,27 +730,13 @@ wxScrollHelperBase::AutoscrollTest(wxPoint clientPt,
                                    wxEventType& evtVertScroll) const
 {
     // is mouse in autoscroll region?
-    wxRect inner, outer;
-    if ( m_innerScrollZone == wxDefaultCoord )
+    if ( !m_outerScrollEnabled &&
+         !m_win->GetRect().Contains(clientPt) )
     {
-        inner = m_win->GetRect();
-        if ( m_outerScrollZone != wxDefaultCoord )
-        {
-            outer = m_win->GetRect().Inflate(m_outerScrollZone);
-        }
+        return false;
     }
-    else
-    {
-        inner = m_win->GetClientRect().Deflate(m_innerScrollZone);
-        if ( m_outerScrollZone != wxDefaultCoord )
-        {
-            outer = m_win->GetClientRect().Inflate(m_outerScrollZone);
-        }
-    }
-
-    bool inScrollRegion = !inner.Contains(clientPt) &&
-                          (outer == wxRect() || outer.Contains(clientPt));
-    if ( !inScrollRegion )
+    wxRect inner = m_win->GetRect().Deflate(m_innerScrollWidth);
+    if ( inner.Contains(clientPt) )
     {
         return false;
     }

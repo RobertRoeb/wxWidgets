@@ -155,16 +155,11 @@ public:
     // wxWidgets <= 3.3.1 autoscrolled exactly when the (captured) mouse cursor
     // was outside the entire window.  Starting with wxWidgets 3.3.2, the
     // region where the mouse cursor triggers autoscrolling is configurable.
-    // If the inner scroll zone is default, then the autoscroll region is
-    // relative to the WINDOW rect, and has width of size outer scroll zone.
-    // If the outer scroll zone width is default, then it extends infinitely
-    // outward from the WINDOW rect, and the behavior is the same as
-    // wxWidgets 3.3.1.  If the inner scroll zone is non-default, then the
-    // autoscroll region is relative to the CLIENT rect since that avoids
-    // requiring the user to figure out how the width of scroll region
-    // interacts with the scrollbar.
-    void SetInnerScrollZone(wxCoord innerZone);
-    void SetOuterScrollZone(wxCoord outerZone);
+    // Allow autoscrolling when the mouse is inside the window but within
+    // insideWidth pixels of the edge.
+    void EnableAutoScrollInside(wxCoord insideWidth);
+    // Forbid autoscrolling when the mouse is outside the window
+    void DisableAutoScrollOutside();
 
     // Check whether clientPt triggers autoscrolling in each direction: return
     // true if it does and fill the corresponding output parameter with the
@@ -368,8 +363,8 @@ protected:
     }
 
 
-    wxCoord               m_innerScrollZone = wxDefaultCoord;
-    wxCoord               m_outerScrollZone = wxDefaultCoord;
+    wxCoord               m_innerScrollWidth = 0;
+    bool                  m_outerScrollEnabled = true;
     bool                  m_inAutoScrollRegion = false;
 
     double                m_scaleX;
