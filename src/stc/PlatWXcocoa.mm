@@ -45,7 +45,6 @@
     if( m_trackingArea != nil )
     {
         [self removeTrackingArea:m_trackingArea];
-        [m_trackingArea release];
     }
 
     int options = NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways;
@@ -54,6 +53,7 @@
                                                     owner: self
                                                  userInfo: nil];
     [self addTrackingArea:m_trackingArea];
+    [m_trackingArea release];
 }
 
 - (void)mouseEntered:(NSEvent *)evt
