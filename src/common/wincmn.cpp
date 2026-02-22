@@ -3122,8 +3122,11 @@ bool wxWindowBase::WXSendContextMenuEvent(const wxPoint& posInScreenCoords)
 // that well and also because we don't want to leave it enabled in default
 // builds used for production
 #if wxDEBUG_LEVEL > 1
+    #define wxHAS_SIZER_DEBUG
+#endif
 
-static void DrawSizers(wxWindowBase *win);
+#ifdef wxHAS_SIZER_DEBUG
+static void DrawSizers(wxWindowBase *win, int level = 0);
 
 static void DrawBorder(wxWindowBase *win, const wxRect& rect, bool fill, const wxPen* pen)
 {
@@ -3203,21 +3206,21 @@ static void DrawSizers(wxWindowBase *win)
     }
 }
 
-#endif // wxDEBUG_LEVEL
+#endif // wxHAS_SIZER_DEBUG
 
 // process special middle clicks
 void wxWindowBase::OnMiddleClick( wxMouseEvent& event )
 {
     if ( event.ControlDown() && event.AltDown() )
     {
-#if wxDEBUG_LEVEL > 1
+#ifdef wxHAS_SIZER_DEBUG
         // Ctrl-Alt-Shift-mclick makes the sizers visible in debug builds
         if ( event.ShiftDown() )
         {
             DrawSizers(this);
         }
         else
-#endif // __WXDEBUG__
+#endif // wxHAS_SIZER_DEBUG
         {
 #if wxUSE_MSGDLG
             // just Ctrl-Alt-middle click shows information about wx version
