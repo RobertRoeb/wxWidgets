@@ -75,7 +75,8 @@
 
 - (void)dealloc
 {
-   [super dealloc];
+    self.overlayView = nil;
+    [super dealloc];
 }
 @end
 
@@ -85,6 +86,12 @@
 {
     wxUnusedVar(dirtyRect);
     [self.bitmapImageRep drawInRect:[self  bounds]];
+}
+
+- (void)dealloc
+{
+    self.bitmapImageRep = nil;
+    [super dealloc];
 }
 
 // from https://developer.apple.com/library/archive/documentation/GraphicsAnimation/Conceptual/HighResolutionOSX/CapturingScreenContents/CapturingScreenContents.html

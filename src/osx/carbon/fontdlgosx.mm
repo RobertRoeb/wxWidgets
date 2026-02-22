@@ -150,6 +150,8 @@
 
         [self addSubview:cancelButton];
         [self addSubview:okButton];
+        [cancelButton release];
+        [okButton release];
 
         [self resetFlags];
     }
