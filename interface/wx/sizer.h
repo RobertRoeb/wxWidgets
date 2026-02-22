@@ -1306,7 +1306,7 @@ public:
     /**
         Get the rectangle of the item on the parent window, excluding borders.
     */
-    virtual wxRect GetRect();
+    virtual wxRect GetRect() const;
 
     /**
         Get the current size of the item, as set in the last Layout.
