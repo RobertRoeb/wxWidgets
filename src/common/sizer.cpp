@@ -85,6 +85,84 @@ WX_DEFINE_EXPORTED_LIST( wxSizerItemList )
 */
 
 // ----------------------------------------------------------------------------
+// global functions
+// ----------------------------------------------------------------------------
+
+namespace
+{
+
+// Helper formatting wxSize as string.
+wxString ToString(const wxSize& size)
+{
+    return wxString::Format("%dx%d", size.x, size.y);
+}
+
+// wxDumpSizer() helper calling itself recursively to dump the whole sizer tree.
+wxString DoDumpSizer(const wxSizer* sizer, const wxSize& minSize, int level)
+{
+    wxString str = sizer->GetClassInfo()->GetClassName();
+    if ( auto* const boxSizer = wxDynamicCast(sizer, wxBoxSizer) )
+    {
+        str += boxSizer->IsVertical() ? "[V]" : "[H]";
+    }
+
+    switch ( sizer->GetItemCount() )
+    {
+        case 0:
+            str += " (empty)";
+            break;
+
+        case 1:
+            break;
+
+        default:
+            str += wxString::Format(" (%zu items)", sizer->GetItemCount());
+    }
+
+    if ( minSize != wxDefaultSize )
+    {
+        str += wxString::Format(" min size %s", ToString(minSize));
+    }
+
+    for ( const wxSizerItem* item : sizer->GetChildren() )
+    {
+        str += "\n";
+        str += wxString(' ', level + 1);
+
+        if ( wxSizer* child = item->GetSizer() )
+        {
+            str += DoDumpSizer(child, item->GetMinSize(), level + 1);
+        }
+        else if ( wxWindow* win = item->GetWindow() )
+        {
+            str += wxString::Format("%s min size %s",
+                                    wxDumpWindow(win),
+                                    ToString(item->GetMinSize()));
+        }
+        else
+        {
+            wxASSERT_MSG( item->IsSpacer(), "unknown wxSizerItem kind" );
+
+            str += wxString::Format("space %s", ToString(item->GetSpacer()));
+        }
+    }
+
+    return str;
+}
+
+} // anonymous namespace
+
+// debugger helper: this function can be called from a debugger to show what
+// the sizer contains
+extern wxString wxDumpSizer(const wxSizer* sizer)
+{
+    if ( !sizer )
+        return "<null sizer>";
+
+    return DoDumpSizer(sizer, wxDefaultSize, 0);
+}
+
+// ----------------------------------------------------------------------------
 // wxSizerFlags
 // ----------------------------------------------------------------------------
 
