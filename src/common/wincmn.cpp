@@ -3137,14 +3137,14 @@ static void DrawBorder(wxWindowBase *win, const wxRect& rect, bool fill, const w
     dc.DrawRectangle(rect.Deflate(1, 1));
 }
 
-static void DrawSizer(wxWindowBase *win, wxSizer *sizer)
+static void DrawSizer(wxWindowBase *win, const wxSizer *sizer, int level)
 {
     for ( const wxSizerItem* item : sizer->GetChildren() )
     {
         if ( item->IsSizer() )
         {
             DrawBorder(win, item->GetRect().Deflate(2), false, wxRED_PEN);
-            DrawSizer(win, item->GetSizer());
+            DrawSizer(win, item->GetSizer(), level + 1);
         }
         else if ( item->IsSpacer() )
         {
@@ -3152,48 +3152,56 @@ static void DrawSizer(wxWindowBase *win, wxSizer *sizer)
         }
         else if ( item->IsWindow() )
         {
-            DrawSizers(item->GetWindow());
+            DrawSizers(item->GetWindow(), level + 1);
         }
         else
             wxFAIL_MSG("inconsistent wxSizerItem status!");
     }
 }
 
-static void DrawSizers(wxWindowBase *win)
+static void DrawSizers(wxWindowBase *win, int level)
 {
+    // show all kind of sizes of this window; see the "window sizing" topic
+    // overview for more info about the various differences:
+    const wxSize fullSz = win->GetSize();
+    const wxSize clientSz = win->GetClientSize();
+    const wxSize bestSz = win->GetBestSize();
+    const wxSize minSz = win->GetMinSize();
+
+    // virtual size is only interesting if it's different from the client size
+    wxString virtualStr;
+    const wxSize virtualSz = win->GetVirtualSize();
+    if ( virtualSz != clientSz )
+    {
+        virtualStr.Printf("  virtual=%4dx%-4d", virtualSz.x, virtualSz.y);
+    }
+
+    wxString name = win->GetName();
+    if ( name.empty() )
+        name = "<unnamed>";
+
+    wxMessageOutputDebug dbgout;
+    dbgout.Printf(
+        "%-20s => full=%4dx%-4d  client=%4dx%-4d  best=%4dx%-4d  min=%4dx%-4d  %s\n",
+        wxString(level, ' ') + name,
+        fullSz.x, fullSz.y,
+        clientSz.x, clientSz.y,
+        bestSz.x, bestSz.y,
+        minSz.x, minSz.y,
+        virtualStr);
+
     DrawBorder(win, win->GetClientSize(), false, wxGREEN_PEN);
 
-    wxSizer *sizer = win->GetSizer();
-    if ( sizer )
+    if ( const wxSizer* const sizer = win->GetSizer() )
     {
-        DrawSizer(win, sizer);
+        DrawSizer(win, sizer, level + 1);
     }
     else // no sizer, still recurse into the children
     {
         for ( wxWindowBase* child : win->GetChildren() )
         {
-            DrawSizers(child);
+            DrawSizers(child, level + 1);
         }
-
-        // show all kind of sizes of this window; see the "window sizing" topic
-        // overview for more info about the various differences:
-        wxSize fullSz = win->GetSize();
-        wxSize clientSz = win->GetClientSize();
-        wxSize bestSz = win->GetBestSize();
-        wxSize minSz = win->GetMinSize();
-        wxSize maxSz = win->GetMaxSize();
-        wxSize virtualSz = win->GetVirtualSize();
-
-        wxMessageOutputDebug dbgout;
-        dbgout.Printf(
-            "%-10s => fullsz=%4d;%-4d  clientsz=%4d;%-4d  bestsz=%4d;%-4d  minsz=%4d;%-4d  maxsz=%4d;%-4d virtualsz=%4d;%-4d\n",
-            win->GetName(),
-            fullSz.x, fullSz.y,
-            clientSz.x, clientSz.y,
-            bestSz.x, bestSz.y,
-            minSz.x, minSz.y,
-            maxSz.x, maxSz.y,
-            virtualSz.x, virtualSz.y);
     }
 }
 
