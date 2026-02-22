@@ -3139,13 +3139,8 @@ static void DrawBorder(wxWindowBase *win, const wxRect& rect, bool fill, const w
 
 static void DrawSizer(wxWindowBase *win, wxSizer *sizer)
 {
-    const wxSizerItemList& items = sizer->GetChildren();
-    for ( wxSizerItemList::const_iterator i = items.begin(),
-                                        end = items.end();
-          i != end;
-          ++i )
+    for ( const wxSizerItem* item : sizer->GetChildren() )
     {
-        wxSizerItem *item = *i;
         if ( item->IsSizer() )
         {
             DrawBorder(win, item->GetRect().Deflate(2), false, wxRED_PEN);
@@ -3175,13 +3170,9 @@ static void DrawSizers(wxWindowBase *win)
     }
     else // no sizer, still recurse into the children
     {
-        const wxWindowList& children = win->GetChildren();
-        for ( wxWindowList::const_iterator i = children.begin(),
-                                         end = children.end();
-              i != end;
-              ++i )
+        for ( wxWindowBase* child : win->GetChildren() )
         {
-            DrawSizers(*i);
+            DrawSizers(child);
         }
 
         // show all kind of sizes of this window; see the "window sizing" topic
