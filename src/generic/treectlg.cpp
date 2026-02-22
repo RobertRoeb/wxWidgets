@@ -2491,18 +2491,26 @@ void wxGenericTreeCtrl::AssignButtonsImageList(wxImageList *imageList)
 // helpers
 // -----------------------------------------------------------------------------
 
+wxSize GetTotalAreaFromClientArea(wxSize size)
+{
+    int x = size.x + PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
+    int y = size.y + PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
+    return wxSize( x, y);
+}
+
 void wxGenericTreeCtrl::AdjustMyScrollbars()
 {
     if (m_anchor)
     {
         int x = 0, y = 0;
         m_anchor->GetSize( x, y, this );
-        y += PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
-        x += PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
+        wxSize totalSize = GetTotalAreaFromClientArea( wxSize( x, y) );
         int x_pos = GetScrollPos( wxHORIZONTAL );
         int y_pos = GetScrollPos( wxVERTICAL );
-        SetScrollbars( PIXELS_PER_UNIT, PIXELS_PER_UNIT,
-                       x/PIXELS_PER_UNIT, y/PIXELS_PER_UNIT,
+        SetScrollbars( PIXELS_PER_UNIT, 
+                       PIXELS_PER_UNIT,
+                       totalSize.x/PIXELS_PER_UNIT, 
+                       totalSize.y/PIXELS_PER_UNIT,
                        x_pos, y_pos );
     }
     else
@@ -4189,7 +4197,7 @@ void wxGenericTreeCtrl::DoDirtyProcessing()
     AdjustMyScrollbars();
 }
 
-wxSize wxGenericTreeCtrl::DoGetBestSize() const
+wxSize wxGenericTreeCtrl::DoGetBestClientSize() const
 {
     // make sure all positions are calculated as normally this only done during
     // idle time but we need them for base class DoGetBestSize() to return the
@@ -4202,10 +4210,16 @@ wxSize wxGenericTreeCtrl::DoGetBestSize() const
     // will not have scrollbars
 
     // Use the calculation from AdjustMyScrollbars()
-    size.y += PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
-    size.x += PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
+    size = GetTotalAreaFromClientArea( size );
     size.x = (size.x / PIXELS_PER_UNIT) * PIXELS_PER_UNIT;
     size.y = (size.y / PIXELS_PER_UNIT) * PIXELS_PER_UNIT;
+
+    return size;
+}
+
+wxSize wxGenericTreeCtrl::DoGetBestSize() const
+{
+    wxSize size = DoGetBestClientSize();
 
     // add the border
     const wxSize& borderSize = GetWindowBorderSize();
@@ -4217,21 +4231,7 @@ wxSize wxGenericTreeCtrl::DoGetBestSize() const
 
 int wxGenericTreeCtrl::DoGetBestClientWidth(int height) const
 {
-    // make sure all positions are calculated as normally this only done during
-    // idle time but we need them for base class DoGetBestSize() to return the
-    // correct result
-    wxConstCast(this, wxGenericTreeCtrl)->CalculatePositions();
-
-    wxSize size = wxTreeCtrlBase::DoGetBestSize();
-
-    // DoGetBestClientWidth calculates if a vertical scrollbar is
-    // needed based on the given height
-
-    // Use the calculation from AdjustMyScrollbars()
-    size.y += PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
-    size.x += PIXELS_PER_UNIT+2; // one more scrollbar unit + 2 pixels
-    size.x = (size.x / PIXELS_PER_UNIT) * PIXELS_PER_UNIT;
-    size.y = (size.y / PIXELS_PER_UNIT) * PIXELS_PER_UNIT;
+    wxSize size = DoGetBestClientSize();
 
     if (height < size.y)
     {
