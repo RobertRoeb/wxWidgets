@@ -1988,6 +1988,10 @@ public:
     /**
         Returns the position and size of the window as a wxRect object.
 
+        As with GetPosition(), the rectangle position is relative to the parent
+        window for child windows or relative to the display origin for top
+        level windows.
+
         @see GetScreenRect()
     */
     wxRect GetRect() const;
