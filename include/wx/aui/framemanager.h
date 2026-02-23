@@ -532,6 +532,8 @@ public:
                  const wxPoint& pt,
                  const wxPoint& offset = wxPoint{});
 
+    wxSize CalculateNewSplitSize() const;
+
     void DrawHintRect(
                  wxWindow* paneWindow,
                  const wxPoint& pt,

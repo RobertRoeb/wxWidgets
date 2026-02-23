@@ -1142,6 +1142,61 @@ bool wxAuiManager::InsertPane(wxWindow* window, const wxAuiPaneInfo& paneInfo,
     return true;
 }
 
+wxSize wxAuiManager::CalculateNewSplitSize() const
+{
+    // Don't do anything if we're not fully initialized yet.
+    if ( !m_frame || m_docks.empty() )
+        return GetMinPaneSize();
+
+    // Calculate the number of vertical and horizontal rows that we have.
+    int numColumns = 0;
+    int numRows = 0;
+
+    // We could have called FindDocks() multiple times here, but it is more
+    // efficient to count the docks ourselves just once.
+    for ( const auto& d : m_docks )
+    {
+        switch ( d.dock_direction )
+        {
+            case wxAUI_DOCK_LEFT:
+            case wxAUI_DOCK_RIGHT:
+                numColumns++;
+                break;
+
+            case wxAUI_DOCK_TOP:
+            case wxAUI_DOCK_BOTTOM:
+                numRows++;
+                break;
+
+            case wxAUI_DOCK_CENTER:
+                // Center dock counts as both a row and a column.
+                numColumns++;
+                numRows++;
+                break;
+
+            case wxAUI_DOCK_NONE:
+                wxFAIL_MSG( "Unexpected dock direction when calculating new split size" );
+        }
+    }
+
+    // We don't know if the new split is going to be horizontal or vertical,
+    // but it doesn't matter because the other size component won't be used, so
+    // we can just set each of them as if the split was in that direction.
+    wxSize size = m_frame->GetClientSize();
+
+    // When we have only one pane, the new split should be half of the total
+    // available size, hence +1.
+    size.x /= numColumns + 1;
+    size.y /= numRows + 1;
+
+    // Always use some minimum size to avoid creating too small panes or
+    // showing tiny hint window (because this function is also used to
+    // determine its size).
+    size.IncTo(GetMinPaneSize());
+
+    return size;
+}
+
 bool
 wxAuiManager::SplitPane(wxWindow* window,
                         wxWindow* newWindow,

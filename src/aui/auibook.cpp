@@ -2257,27 +2257,7 @@ void wxAuiNotebook::UpdateHintWindowSize()
 // calculates the size of the new split
 wxSize wxAuiNotebook::CalculateNewSplitSize()
 {
-    // One of the panes corresponds to the dummy window, the rest are tabs.
-    const int tab_ctrl_count = m_mgr.GetAllPanes().size() - 1;
-
-    wxSize new_split_size;
-
-    // if there is only one tab control, the first split
-    // should happen around the middle
-    if (tab_ctrl_count < 2)
-    {
-        new_split_size = GetClientSize();
-        new_split_size.x /= 2;
-        new_split_size.y /= 2;
-    }
-    else
-    {
-        // this is in place of a more complicated calculation
-        // that needs to be implemented
-        new_split_size = FromDIP(wxSize(180,180));
-    }
-
-    return new_split_size;
+    return m_mgr.CalculateNewSplitSize();
 }
 
 int wxAuiNotebook::CalculateTabCtrlHeight()
