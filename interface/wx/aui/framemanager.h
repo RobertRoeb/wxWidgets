@@ -707,7 +707,9 @@ public:
     /**
         Create a new pane with the given window near an existing pane.
 
-        The size of the new pane is determined by the size of @a newWindow.
+        The size of the new pane is determined by CalculateNewSplitSize() and
+        the existing panes are resized to have the same size in the split
+        direction.
 
         Note that this function calls Update() internally, so there is no need
         to call it separately.
