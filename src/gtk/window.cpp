@@ -402,7 +402,6 @@ public:
     wxPoint              m_lastTouchPoint;
     GdkEventSequence*    m_touchSequence;
     bool                 m_rawTouchEvents;
-    bool                 m_panGestureStart;  // This is true when the gesture has just started
     double               m_lastPanOffset;    // Last offset for the pan gesture, used to calculate deltas for pan gesture event
     gdouble              m_lastScale;        // Last scale provided by GTK, used when zoom gesture ends
     gdouble              m_lastAngleDelta;   // Last angle provided by GTK, used when rotate gesture ends
@@ -3341,28 +3340,15 @@ enum GestureStates
     end
 };
 
-enum TrackedGestures
+enum TrackedGesture
 {
     two_finger_tap = 0x0001,
     press_and_tap  = 0x0002,
     horizontal_pan = 0x0004,
-    vertical_pan   = 0x0008
+    vertical_pan   = 0x0008,
+    rotate         = 0x0010,
+    zoom           = 0x0020,
 };
-
-extern "C" {
-static void
-pan_gesture_begin_callback(GtkGesture* WXUNUSED(gesture), GdkEventSequence* WXUNUSED(sequence), wxWindowGTK* WXUNUSED(win))
-{
-    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
-    if ( !data )
-        return;
-
-    data->m_panGestureStart = true;
-
-    // Set it to 0, as this will be used to calculate the deltas for new pan gesture
-    data->m_lastPanOffset = 0;
-}
-}
 
 extern "C" {
 static void
@@ -3372,8 +3358,8 @@ horizontal_pan_gesture_end_callback(GtkGesture* gesture, GdkEventSequence* seque
     if ( !data )
         return;
 
-    // Do not process horizontal pan, if there was no "pan" signal for it.
-    if ( !(data->m_allowedGestures & horizontal_pan) )
+    // Ignore the signal if the gesture isn't active
+    if ( !(data->m_activeGestures & horizontal_pan) )
     {
         return;
     }
@@ -3385,13 +3371,13 @@ horizontal_pan_gesture_end_callback(GtkGesture* gesture, GdkEventSequence* seque
         return;
     }
 
-    data->m_allowedGestures &= ~horizontal_pan;
-
     wxPanGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetGestureEnd();
+
+    data->m_activeGestures &= ~horizontal_pan;
 
     win->GTKProcessEvent(event);
 }
@@ -3405,8 +3391,8 @@ vertical_pan_gesture_end_callback(GtkGesture* gesture, GdkEventSequence* sequenc
     if ( !data )
         return;
 
-    // Do not process vertical pan, if there was no "pan" signal for it.
-    if ( !(data->m_allowedGestures & vertical_pan) )
+    // Ignore the signal if the gesture isn't active
+    if ( !(data->m_activeGestures & vertical_pan) )
     {
         return;
     }
@@ -3418,13 +3404,13 @@ vertical_pan_gesture_end_callback(GtkGesture* gesture, GdkEventSequence* sequenc
         return;
     }
 
-    data->m_allowedGestures &= ~vertical_pan;
-
     wxPanGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetGestureEnd();
+
+    data->m_activeGestures &= ~vertical_pan;
 
     win->GTKProcessEvent(event);
 }
@@ -3459,40 +3445,47 @@ pan_gesture_callback(GtkGesture* gesture, GtkPanDirection direction, gdouble off
     event.SetEventObject(win);
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
 
+    TrackedGesture gesture_type = direction == GTK_PAN_DIRECTION_UP || direction == GTK_PAN_DIRECTION_DOWN
+                                    ? vertical_pan : horizontal_pan;
+
+    if ( !(data->m_activeGestures & (horizontal_pan | vertical_pan)) )
+    {
+        // For the pan gesture, unlike the others, we only consider the gesture started once we actually receive a pan signal
+        data->m_activeGestures |= gesture_type;
+        data->m_lastPanOffset = 0;
+        event.SetGestureStart();
+    }
+    else if ( !(data->m_activeGestures & gesture_type) )
+    {
+        // We shouldn't receive horizontal pan events while a vertical pan is active and vice versa,
+        // but let's ignore the event just in case
+        return;
+    }
+
     // This is the difference between this and the last pan gesture event in the current sequence
     int delta = wxRound(offset - data->m_lastPanOffset);
 
     switch ( direction )
     {
         case GTK_PAN_DIRECTION_UP:
-            data->m_allowedGestures |= vertical_pan;
             event.SetDelta(wxPoint(0, -delta));
             break;
 
         case GTK_PAN_DIRECTION_DOWN:
-            data->m_allowedGestures |= vertical_pan;
             event.SetDelta(wxPoint(0, delta));
             break;
 
         case GTK_PAN_DIRECTION_RIGHT:
-            data->m_allowedGestures |= horizontal_pan;
             event.SetDelta(wxPoint(delta, 0));
             break;
 
         case GTK_PAN_DIRECTION_LEFT:
-            data->m_allowedGestures |= horizontal_pan;
             event.SetDelta(wxPoint(-delta, 0));
             break;
     }
 
     // Update m_lastPanOffset
     data->m_lastPanOffset = offset;
-
-    if ( data->m_panGestureStart )
-    {
-        event.SetGestureStart();
-        data->m_panGestureStart = false;
-    }
 
     // Cancel press and tap gesture if it is not active during "pan" signal.
     if( !(data->m_activeGestures & press_and_tap) )
@@ -3562,6 +3555,8 @@ zoom_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(sequ
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetGestureStart();
 
+    data->m_activeGestures |= zoom;
+
     data->m_lastScale = 1;
 
     // Save this point because the point obtained through gtk_gesture_get_bounding_box_center()
@@ -3580,12 +3575,20 @@ zoom_gesture_end_callback(GtkGesture* WXUNUSED(gesture), GdkEventSequence* WXUNU
     if ( !data )
         return;
 
+    // Ignore the signal if the gesture isn't active
+    if ( !(data->m_activeGestures & zoom) )
+    {
+        return;
+    }
+
     wxZoomGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
     event.SetPosition(data->m_lastGesturePoint);
     event.SetGestureEnd();
     event.SetZoomFactor(data->m_lastScale);
+
+    data->m_activeGestures &= ~zoom;
 
     win->GTKProcessEvent(event);
 }
@@ -3611,6 +3614,8 @@ rotate_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(se
     event.SetEventObject(win);
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetGestureStart();
+
+    data->m_activeGestures |= rotate;
 
     data->m_lastAngleDelta = 0;
 
@@ -3663,12 +3668,20 @@ rotate_gesture_end_callback(GtkGesture* WXUNUSED(gesture), GdkEventSequence* WXU
     if ( !data )
         return;
 
+    // Ignore the signal if the gesture isn't active
+    if ( !(data->m_activeGestures & rotate) )
+    {
+        return;
+    }
+
     wxRotateGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
     event.SetPosition(data->m_lastGesturePoint);
     event.SetGestureEnd();
     event.SetRotationAngle(data->m_lastAngleDelta);
+
+    data->m_activeGestures &= ~rotate;
 
     win->GTKProcessEvent(event);
 }
@@ -3997,7 +4010,6 @@ void wxWindowGesturesData::Reinit(wxWindowGTK* win,
     m_activeGestures = 0;
     m_touchSequence = nullptr;
     m_rawTouchEvents = false;
-    m_panGestureStart = false;
     m_lastPanOffset = 0;
     m_lastScale = 1;
     m_lastAngleDelta = 0;
@@ -4010,8 +4022,6 @@ void wxWindowGesturesData::Reinit(wxWindowGTK* win,
 
         gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER(m_vertical_pan_gesture), GTK_PHASE_TARGET);
 
-        g_signal_connect (m_vertical_pan_gesture, "begin",
-                          G_CALLBACK(pan_gesture_begin_callback), win);
         g_signal_connect (m_vertical_pan_gesture, "pan",
                           G_CALLBACK(pan_gesture_callback), win);
         g_signal_connect (m_vertical_pan_gesture, "end",
@@ -4037,8 +4047,6 @@ void wxWindowGesturesData::Reinit(wxWindowGTK* win,
 
         gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER(m_horizontal_pan_gesture), GTK_PHASE_TARGET);
 
-        g_signal_connect (m_horizontal_pan_gesture, "begin",
-                          G_CALLBACK(pan_gesture_begin_callback), win);
         g_signal_connect (m_horizontal_pan_gesture, "pan",
                           G_CALLBACK(pan_gesture_callback), win);
         g_signal_connect (m_horizontal_pan_gesture, "end",
