@@ -1232,8 +1232,89 @@ wxAuiManager::SplitPane(wxWindow* window,
         defaultDropPos = wxPoint(sizeWindow.x/2, sizeWindow.y);
     }
 
+    // Get the new split size before adding the pane, as this would change it.
+    const wxSize size = CalculateNewSplitSize();
+
     AddPane(newWindow, paneInfo,
             dropPos != wxDefaultPosition ? dropPos : defaultDropPos);
+
+    // The direction specified in the pane info may be overridden by the drop
+    // position, so get the real direction of the new pane now.
+    bool adjustHorz = false;
+    bool adjustVert = false;
+    switch ( GetPane(newWindow).dock_direction )
+    {
+        case wxAUI_DOCK_LEFT:
+        case wxAUI_DOCK_RIGHT:
+            adjustHorz = true;
+            break;
+
+        case wxAUI_DOCK_TOP:
+        case wxAUI_DOCK_BOTTOM:
+            adjustVert = true;
+            break;
+
+        case wxAUI_DOCK_CENTER:
+        case wxAUI_DOCK_NONE:
+            wxFAIL_MSG( "Unexpected dock direction for new pane after split" );
+    }
+
+    // Adjust all the existing docks to have the same size as the new one in
+    // the split direction.
+    for ( auto& d : m_docks )
+    {
+        switch ( d.dock_direction )
+        {
+            case wxAUI_DOCK_LEFT:
+            case wxAUI_DOCK_RIGHT:
+                if ( adjustHorz )
+                    d.size = size.x;
+                break;
+
+            case wxAUI_DOCK_TOP:
+            case wxAUI_DOCK_BOTTOM:
+                if ( adjustVert )
+                    d.size = size.y;
+                break;
+
+            case wxAUI_DOCK_CENTER:
+                d.size = adjustHorz ? size.x : size.y;
+                break;
+
+            case wxAUI_DOCK_NONE:
+                wxFAIL_MSG( "Unexpected dock direction when calculating new split size" );
+        }
+    }
+
+    // And if we need to create a new dock for the new pane, set its size to be
+    // the same too.
+    //
+    // Note: this is similar to the code in LayoutAll() and we could also call
+    // Update() to do this, but then we'd need to call it again to take the
+    // changed dock size into account, so we prefer to set the size here to
+    // avoid an extra call to Update().
+    //
+    // Also note that it is _not_ sufficient to check if the dock is going to
+    // be created for the new pane, in some layouts it can go into an existing
+    // dock and a new dock is created for an existing pane, so we really need
+    // to iterate over all of them.
+    for ( const auto& p : m_panes )
+    {
+        if ( FindDocks(m_docks,
+                       p.dock_direction,
+                       p.dock_layer,
+                       p.dock_row,
+                       FindDocksFlags::OnlyFirst).IsEmpty() )
+        {
+            wxAuiDockInfo d;
+            d.dock_direction = p.dock_direction;
+            d.dock_layer = p.dock_layer;
+            d.dock_row = p.dock_row;
+            d.size = adjustHorz ? size.x : size.y;
+            m_docks.Add(d);
+        }
+    }
+
     Update();
 
     return true;
