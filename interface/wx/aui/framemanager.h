@@ -368,6 +368,24 @@ public:
                              const wxPoint& offset = wxPoint{0, 0});
 
     /**
+        Return a reasonable size to use for a new split.
+
+        This function currently calculates the number of columns and rows in
+        the current layout and returns the size of the managed window divided
+        by one more than that number, i.e. returns half of the available size
+        if there is currently just one row or column, a third if there are two
+        rows or columns, and so on.
+
+        The implementation may change in the future, but it will always return
+        some reasonable size to use for a new split.
+
+        @see SplitPane(), wxAuiNotebook::CalculateNewSplitSize()
+
+        @since 3.3.2
+     */
+    wxSize CalculateNewSplitSize() const;
+
+    /**
         Check if a key modifier is pressed (actually ::WXK_CONTROL or
         ::WXK_ALT) while dragging the frame to not dock the window.
     */
