@@ -486,6 +486,11 @@ public:
                  const wxAuiPaneInfo& insertLocation,
                  int insertLevel = wxAUI_INSERT_PANE);
 
+    bool SplitPane(wxWindow* window,
+                   wxWindow* newWindow,
+                   int direction,
+                   const wxPoint& dropPos = wxDefaultPosition);
+
     bool DetachPane(wxWindow* window);
 
     void Update();

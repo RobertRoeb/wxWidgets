@@ -2943,8 +2943,6 @@ wxAuiNotebook::GetPagesInDisplayOrder(wxAuiTabCtrl* tabCtrl) const
 
 void wxAuiNotebook::Split(size_t page, int direction)
 {
-    wxSize cli_size = GetClientSize();
-
     // get the page's window pointer
     wxWindow* wnd = GetPage(page);
     if (!wnd)
@@ -2965,34 +2963,7 @@ void wxAuiNotebook::Split(size_t page, int direction)
     wxAuiTabFrame* new_tabs = CreateTabFrame(CalculateNewSplitSize());
     wxAuiTabCtrl* const dest_tabs = new_tabs->m_tabs;
 
-    // create a pane info structure with the information
-    // about where the pane should be added
-    wxAuiPaneInfo paneInfo = wxAuiPaneInfo().Bottom().CaptionVisible(false);
-    wxPoint mouse_pt;
-
-    if (direction == wxLEFT)
-    {
-        paneInfo.Left();
-        mouse_pt = wxPoint(0, cli_size.y/2);
-    }
-    else if (direction == wxRIGHT)
-    {
-        paneInfo.Right();
-        mouse_pt = wxPoint(cli_size.x, cli_size.y/2);
-    }
-    else if (direction == wxTOP)
-    {
-        paneInfo.Top();
-        mouse_pt = wxPoint(cli_size.x/2, 0);
-    }
-    else if (direction == wxBOTTOM)
-    {
-        paneInfo.Bottom();
-        mouse_pt = wxPoint(cli_size.x/2, cli_size.y);
-    }
-
-    m_mgr.AddPane(new_tabs, paneInfo, mouse_pt);
-    m_mgr.Update();
+    m_mgr.SplitPane(GetTabFrameFromTabCtrl(src_tabs), new_tabs, direction);
 
     // remove the page from the source tabs
     wxAuiNotebookPage page_info = *srcTabInfo.pageInfo;
@@ -3427,11 +3398,11 @@ void wxAuiNotebook::OnTabEndDrag(wxAuiTabCtrl* src_tabs, int src_idx)
 
             // If there is no tabframe at all, create one
             wxAuiTabFrame* new_tabs = CreateTabFrame(CalculateNewSplitSize());
+            m_mgr.SplitPane(GetTabFrameFromTabCtrl(src_tabs),
+                            new_tabs,
+                            wxBOTTOM,
+                            mouse_client_pt);
 
-            m_mgr.AddPane(new_tabs,
-                          wxAuiPaneInfo().Bottom().CaptionVisible(false),
-                          mouse_client_pt);
-            m_mgr.Update();
             dest_tabs = new_tabs->m_tabs;
             insert_idx = 0;
         }

@@ -1142,6 +1142,47 @@ bool wxAuiManager::InsertPane(wxWindow* window, const wxAuiPaneInfo& paneInfo,
     return true;
 }
 
+bool
+wxAuiManager::SplitPane(wxWindow* window,
+                        wxWindow* newWindow,
+                        int direction,
+                        const wxPoint& dropPos)
+{
+    const wxAuiPaneInfo& paneOrig = GetPane(window);
+    wxCHECK_MSG( paneOrig.IsOk(), false, "Window being split must be present" );
+
+    wxAuiPaneInfo paneInfo = wxAuiPaneInfo().CaptionVisible(false);
+
+    wxPoint defaultDropPos;
+    const wxSize sizeWindow = m_frame->GetClientSize();
+
+    if (direction == wxLEFT)
+    {
+        paneInfo.Left();
+        defaultDropPos = wxPoint(0, sizeWindow.y/2);
+    }
+    else if (direction == wxRIGHT)
+    {
+        paneInfo.Right();
+        defaultDropPos = wxPoint(sizeWindow.x, sizeWindow.y/2);
+    }
+    else if (direction == wxTOP)
+    {
+        paneInfo.Top();
+        defaultDropPos = wxPoint(sizeWindow.x/2, 0);
+    }
+    else if (direction == wxBOTTOM)
+    {
+        paneInfo.Bottom();
+        defaultDropPos = wxPoint(sizeWindow.x/2, sizeWindow.y);
+    }
+
+    AddPane(newWindow, paneInfo,
+            dropPos != wxDefaultPosition ? dropPos : defaultDropPos);
+    Update();
+
+    return true;
+}
 
 // DetachPane() removes a pane from the frame manager.  This
 // method will not destroy the window that is removed.
