@@ -2906,18 +2906,23 @@ void wxAuiToolBar::OnMiddleUp(wxMouseEvent& evt)
     wxAuiToolBarItem* hitItem;
     hitItem = FindToolByPosition(evt.GetX(), evt.GetY());
 
+    int toolId;
     if (m_actionItem && hitItem == m_actionItem)
     {
-        if (hitItem->m_kind == wxITEM_NORMAL)
-        {
-            wxAuiToolBarEvent e(wxEVT_AUITOOLBAR_MIDDLE_CLICK, m_actionItem->m_toolId);
-            e.SetEventObject(this);
-            e.SetToolId(m_actionItem->m_toolId);
-            e.SetClickPoint(m_actionPos);
-            GetEventHandler()->ProcessEvent(e);
-            DoIdleUpdate();
-        }
+        toolId = m_actionItem->m_toolId;
     }
+    else
+    {
+        // middle-clicked on the invalid area of the toolbar
+        toolId = wxNOT_FOUND;
+    }
+
+    wxAuiToolBarEvent e(wxEVT_AUITOOLBAR_MIDDLE_CLICK, toolId);
+    e.SetEventObject(this);
+    e.SetToolId(toolId);
+    e.SetClickPoint(m_actionPos);
+    GetEventHandler()->ProcessEvent(e);
+    DoIdleUpdate();
 
     // reset member variables
     m_actionPos = wxPoint(-1,-1);
