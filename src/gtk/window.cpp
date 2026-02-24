@@ -3612,6 +3612,8 @@ rotate_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(se
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetGestureStart();
 
+    data->m_lastAngleDelta = 0;
+
     // Save this point because the point obtained through gtk_gesture_get_bounding_box_center()
     // in the "end" signal is not a rotation center
     data->m_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
