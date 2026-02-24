@@ -716,6 +716,12 @@ public:
      */
     virtual void SetElementSize(int elementId, int size) = 0;
 
+    /**
+        Show a drop down menu with the given items.
+
+        @return ID of the item selected in the menu or -1 if the menu was
+            dismissed
+     */
     virtual int ShowDropDown(
                          wxWindow* wnd,
                          const wxAuiToolBarItemArray& items) = 0;

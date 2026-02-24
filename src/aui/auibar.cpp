@@ -86,31 +86,6 @@ static bool IsThemeDark()
 
 
 
-class ToolbarCommandCapture : public wxEvtHandler
-{
-public:
-
-    ToolbarCommandCapture() { m_lastId = 0; }
-    int GetCommandId() const { return m_lastId; }
-
-    bool ProcessEvent(wxEvent& evt) override
-    {
-        if (evt.GetEventType() == wxEVT_MENU)
-        {
-            m_lastId = evt.GetId();
-            return true;
-        }
-
-        if (GetNextHandler())
-            return GetNextHandler()->ProcessEvent(evt);
-
-        return false;
-    }
-
-private:
-    int m_lastId;
-};
-
 wxBitmap wxAuiToolBarItem::GetCurrentBitmapFor(wxWindow* wnd) const
 {
     // We suppose that we don't have disabled bitmap if we don't have the
@@ -869,13 +844,9 @@ int wxAuiGenericToolBarArt::ShowDropDown(wxWindow* wnd,
     wxRect cli_rect = wnd->GetClientRect();
     pt.y = cli_rect.y + cli_rect.height;
 
-    ToolbarCommandCapture* cc = new ToolbarCommandCapture;
-    wnd->PushEventHandler(cc);
-    wnd->PopupMenu(&menuPopup, pt);
-    int command = cc->GetCommandId();
-    wnd->PopEventHandler(true);
+    const int command = wnd->GetPopupMenuSelectionFromUser(menuPopup, pt);
 
-    return command;
+    return command == wxID_NONE ? -1 : command;
 }
 
 
