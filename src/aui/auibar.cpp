@@ -1648,15 +1648,13 @@ void wxAuiToolBar::RefreshOverflowState()
 
     int overflow_state = 0;
 
-    wxRect overflow_rect = GetOverflowRect();
-
 
     // find out the mouse's current position
     wxPoint pt = ::wxGetMousePosition();
     pt = this->ScreenToClient(pt);
 
     // find out if the mouse cursor is inside the dropdown rectangle
-    if (overflow_rect.Contains(pt.x, pt.y))
+    if (GetOverflowRect().Contains(pt))
     {
         if (::wxGetMouseState().LeftIsDown())
             overflow_state = wxAUI_BUTTON_STATE_PRESSED;
@@ -2649,7 +2647,7 @@ void wxAuiToolBar::OnLeftDown(wxMouseEvent& evt)
     if (m_gripperSizerItem)
     {
         wxRect gripper_rect = m_gripperSizerItem->GetRect();
-        if (gripper_rect.Contains(evt.GetX(), evt.GetY()))
+        if (gripper_rect.Contains(evt.GetPosition()))
         {
             // find aui manager
             wxAuiManager* manager = wxAuiManager::GetManager(this);
@@ -2667,9 +2665,7 @@ void wxAuiToolBar::OnLeftDown(wxMouseEvent& evt)
 
     if (m_overflowSizerItem && m_overflowVisible && m_art)
     {
-        wxRect overflow_rect = GetOverflowRect();
-
-        if (overflow_rect.Contains(evt.m_x, evt.m_y))
+        if (GetOverflowRect().Contains(evt.GetPosition()))
         {
             wxAuiToolBarEvent e(wxEVT_AUITOOLBAR_OVERFLOW_CLICK, -1);
             e.SetEventObject(this);
@@ -2845,14 +2841,13 @@ void wxAuiToolBar::OnRightDown(wxMouseEvent& evt)
 
     if (m_gripperSizerItem)
     {
-        wxRect gripper_rect = m_gripperSizerItem->GetRect();
-        if (gripper_rect.Contains(evt.GetX(), evt.GetY()))
+        if (m_gripperSizerItem->GetRect().Contains(evt.GetPosition()))
             return;
     }
 
     if (m_overflowSizerItem && m_overflowVisible && m_art)
     {
-        if (GetOverflowRect().Contains(evt.GetX(), evt.GetY()))
+        if (GetOverflowRect().Contains(evt.GetPosition()))
             return;
     }
 
@@ -2911,14 +2906,13 @@ void wxAuiToolBar::OnMiddleDown(wxMouseEvent& evt)
 
     if (m_gripperSizerItem)
     {
-        wxRect gripper_rect = m_gripperSizerItem->GetRect();
-        if (gripper_rect.Contains(evt.GetX(), evt.GetY()))
+        if (m_gripperSizerItem->GetRect().Contains(evt.GetPosition()))
             return;
     }
 
     if (m_overflowSizerItem && m_overflowVisible && m_art)
     {
-        if (GetOverflowRect().Contains(evt.GetX(), evt.GetY()))
+        if (GetOverflowRect().Contains(evt.GetPosition()))
             return;
     }
 
@@ -3071,8 +3065,7 @@ void wxAuiToolBar::OnSetCursor(wxSetCursorEvent& evt)
 
     if (m_gripperSizerItem)
     {
-        wxRect gripper_rect = m_gripperSizerItem->GetRect();
-        if (gripper_rect.Contains(evt.GetX(), evt.GetY()))
+        if (m_gripperSizerItem->GetRect().Contains(evt.GetPosition()))
         {
             cursor = wxCursor(wxCURSOR_SIZING);
         }
