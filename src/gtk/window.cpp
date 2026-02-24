@@ -402,6 +402,11 @@ public:
     wxPoint              m_lastTouchPoint;
     GdkEventSequence*    m_touchSequence;
     bool                 m_rawTouchEvents;
+    bool                 m_panGestureStart;  // This is true when the gesture has just started
+    double               m_lastPanOffset;    // Last offset for the pan gesture, used to calculate deltas for pan gesture event
+    gdouble              m_lastScale;        // Last scale provided by GTK, used when zoom gesture ends
+    gdouble              m_lastAngleDelta;   // Last angle provided by GTK, used when rotate gesture ends
+    wxPoint              m_lastGesturePoint; // Last zoom/rotate gesture point
 
     GtkGesture* m_vertical_pan_gesture;
     GtkGesture* m_horizontal_pan_gesture;
@@ -417,21 +422,6 @@ typedef wxExternalField<wxWindow,
                         wxWindowGesturesMap> wxWindowGestures;
 
 } // anonymous namespace
-
-// This is true when the gesture has just started (currently used for pan gesture only)
-static bool gs_gestureStart = false;
-
-// Last offset for the pan gesture, this is used to calculate deltas for pan gesture event
-static double gs_lastOffset = 0;
-
-// Last scale provided by GTK
-static gdouble gs_lastScale = 1.0;
-
-// This is used to set the angle when rotate gesture ends.
-static gdouble gs_lastAngleDelta = 0;
-
-// Last Zoom/Rotate gesture point
-static wxPoint gs_lastGesturePoint;
 
 #endif // wxGTK_HAS_GESTURES_SUPPORT
 
@@ -3363,10 +3353,14 @@ extern "C" {
 static void
 pan_gesture_begin_callback(GtkGesture* WXUNUSED(gesture), GdkEventSequence* WXUNUSED(sequence), wxWindowGTK* WXUNUSED(win))
 {
-    gs_gestureStart = true;
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
+    data->m_panGestureStart = true;
 
     // Set it to 0, as this will be used to calculate the deltas for new pan gesture
-    gs_lastOffset = 0;
+    data->m_lastPanOffset = 0;
 }
 }
 
@@ -3440,6 +3434,10 @@ extern "C" {
 static void
 pan_gesture_callback(GtkGesture* gesture, GtkPanDirection direction, gdouble offset, wxWindow* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     // The function that retrieves the GdkEventSequence (which will further be used to get the gesture point)
     // should be called only when the gestrure is active
     if ( !gtk_gesture_is_active(gesture) )
@@ -3461,12 +3459,8 @@ pan_gesture_callback(GtkGesture* gesture, GtkPanDirection direction, gdouble off
     event.SetEventObject(win);
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
 
-    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
-    if ( !data )
-        return;
-
     // This is the difference between this and the last pan gesture event in the current sequence
-    int delta = wxRound(offset - gs_lastOffset);
+    int delta = wxRound(offset - data->m_lastPanOffset);
 
     switch ( direction )
     {
@@ -3491,13 +3485,13 @@ pan_gesture_callback(GtkGesture* gesture, GtkPanDirection direction, gdouble off
             break;
     }
 
-    // Update gs_lastOffset
-    gs_lastOffset = offset;
+    // Update m_lastPanOffset
+    data->m_lastPanOffset = offset;
 
-    if ( gs_gestureStart )
+    if ( data->m_panGestureStart )
     {
         event.SetGestureStart();
-        gs_gestureStart = false;
+        data->m_panGestureStart = false;
     }
 
     // Cancel press and tap gesture if it is not active during "pan" signal.
@@ -3514,6 +3508,10 @@ extern "C" {
 static void
 zoom_gesture_callback(GtkGesture* gesture, gdouble scale, wxWindow* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     gdouble x, y;
 
     if ( !gtk_gesture_get_bounding_box_center(gesture, &x, &y) )
@@ -3527,21 +3525,17 @@ zoom_gesture_callback(GtkGesture* gesture, gdouble scale, wxWindow* win)
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetZoomFactor(scale);
 
-    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
-    if ( !data )
-        return;
-
-    // Cancel "Two FInger Tap Event" if scale has changed
-    if ( wxRound(scale * 1000) != wxRound(gs_lastScale * 1000) )
+    // Cancel "Two Finger Tap Event" if scale has changed
+    if ( wxRound(scale * 1000) != wxRound(data->m_lastScale * 1000) )
     {
         data->m_allowedGestures &= ~two_finger_tap;
     }
 
-    gs_lastScale = scale;
+    data->m_lastScale = scale;
 
     // Save this point because the point obtained through gtk_gesture_get_bounding_box_center()
     // in the "end" signal is not a zoom center
-    gs_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
+    data->m_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
 
     win->GTKProcessEvent(event);
 }
@@ -3551,6 +3545,10 @@ extern "C" {
 static void
 zoom_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(sequence), wxWindowGTK* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     gdouble x, y;
 
     if ( !gtk_gesture_get_bounding_box_center(gesture, &x, &y) )
@@ -3558,17 +3556,17 @@ zoom_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(sequ
         return;
     }
 
-    gs_lastScale = 1.0;
-
     wxZoomGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
     event.SetPosition(wxPoint(wxRound(x), wxRound(y)));
     event.SetGestureStart();
 
+    data->m_lastScale = 1;
+
     // Save this point because the point obtained through gtk_gesture_get_bounding_box_center()
     // in the "end" signal is not a zoom center
-    gs_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
+    data->m_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
 
     win->GTKProcessEvent(event);
 }
@@ -3578,12 +3576,16 @@ extern "C" {
 static void
 zoom_gesture_end_callback(GtkGesture* WXUNUSED(gesture), GdkEventSequence* WXUNUSED(sequence), wxWindowGTK* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     wxZoomGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
-    event.SetPosition(gs_lastGesturePoint);
+    event.SetPosition(data->m_lastGesturePoint);
     event.SetGestureEnd();
-    event.SetZoomFactor(gs_lastScale);
+    event.SetZoomFactor(data->m_lastScale);
 
     win->GTKProcessEvent(event);
 }
@@ -3593,6 +3595,10 @@ extern "C" {
 static void
 rotate_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(sequence), wxWindowGTK* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     gdouble x, y;
 
     if ( !gtk_gesture_get_bounding_box_center(gesture, &x, &y) )
@@ -3608,7 +3614,7 @@ rotate_gesture_begin_callback(GtkGesture* gesture, GdkEventSequence* WXUNUSED(se
 
     // Save this point because the point obtained through gtk_gesture_get_bounding_box_center()
     // in the "end" signal is not a rotation center
-    gs_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
+    data->m_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
 
     win->GTKProcessEvent(event);
 }
@@ -3618,6 +3624,10 @@ extern "C" {
 static void
 rotate_gesture_callback(GtkGesture* gesture, gdouble WXUNUSED(angle), gdouble angle_delta, wxWindowGTK* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     gdouble x, y;
 
     if ( !gtk_gesture_get_bounding_box_center(gesture, &x, &y) )
@@ -3633,11 +3643,11 @@ rotate_gesture_callback(GtkGesture* gesture, gdouble WXUNUSED(angle), gdouble an
     event.SetRotationAngle(angle_delta);
 
     // Save the angle to set it when the gesture ends.
-    gs_lastAngleDelta = angle_delta;
+    data->m_lastAngleDelta = angle_delta;
 
     // Save this point because the point obtained through gtk_gesture_get_bounding_box_center()
     // in the "end" signal is not a rotation center
-    gs_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
+    data->m_lastGesturePoint = wxPoint(wxRound(x), wxRound(y));
 
     win->GTKProcessEvent(event);
 }
@@ -3647,12 +3657,16 @@ extern "C" {
 static void
 rotate_gesture_end_callback(GtkGesture* WXUNUSED(gesture), GdkEventSequence* WXUNUSED(sequence), wxWindowGTK* win)
 {
+    wxWindowGesturesData* const data = wxWindowGestures::FromObject(win);
+    if ( !data )
+        return;
+
     wxRotateGestureEvent event(win->GetId());
 
     event.SetEventObject(win);
-    event.SetPosition(gs_lastGesturePoint);
+    event.SetPosition(data->m_lastGesturePoint);
     event.SetGestureEnd();
-    event.SetRotationAngle(gs_lastAngleDelta);
+    event.SetRotationAngle(data->m_lastAngleDelta);
 
     win->GTKProcessEvent(event);
 }
@@ -3981,6 +3995,10 @@ void wxWindowGesturesData::Reinit(wxWindowGTK* win,
     m_activeGestures = 0;
     m_touchSequence = nullptr;
     m_rawTouchEvents = false;
+    m_panGestureStart = false;
+    m_lastPanOffset = 0;
+    m_lastScale = 1;
+    m_lastAngleDelta = 0;
 
     if ( eventsMask & wxTOUCH_VERTICAL_PAN_GESTURE )
     {
