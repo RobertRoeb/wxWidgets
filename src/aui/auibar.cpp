@@ -2838,8 +2838,6 @@ void wxAuiToolBar::OnRightDown(wxMouseEvent& evt)
     if (HasCapture())
         return;
 
-    wxRect cli_rect(wxPoint(0,0), GetClientSize());
-
     if (m_gripperSizerItem)
     {
         if (m_gripperSizerItem->GetRect().Contains(evt.GetPosition()))
@@ -2900,8 +2898,6 @@ void wxAuiToolBar::OnMiddleDown(wxMouseEvent& evt)
 {
     if (HasCapture())
         return;
-
-    wxRect cli_rect(wxPoint(0,0), GetClientSize());
 
     if (m_gripperSizerItem)
     {
