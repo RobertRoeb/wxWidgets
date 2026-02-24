@@ -2551,7 +2551,7 @@ void wxAuiToolBar::UpdateBackgroundBitmap(const wxSize& size)
 void wxAuiToolBar::OnPaint(wxPaintEvent& WXUNUSED(evt))
 {
     wxAutoBufferedPaintDC dc(this);
-    wxRect cli_rect(wxPoint(0,0), GetClientSize());
+    const wxSize cli_size = GetClientSize();
 
 
     bool horizontal = m_orientation == wxHORIZONTAL;
@@ -2575,9 +2575,9 @@ void wxAuiToolBar::OnPaint(wxPaintEvent& WXUNUSED(evt))
     // calculated how far we can draw items
     int last_extent;
     if (horizontal)
-        last_extent = cli_rect.width;
+        last_extent = cli_size.x;
     else
-        last_extent = cli_rect.height;
+        last_extent = cli_size.y;
     if (m_overflowVisible)
         last_extent -= overflowSize;
 
