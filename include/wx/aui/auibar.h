@@ -724,6 +724,9 @@ private:
     // Common part of OnLeaveWindow() and OnCaptureLost().
     void DoResetMouseState();
 
+    // Common part of On{Right,Middle}Up().
+    void DoRightOrMiddleUp(wxMouseEvent& evt, wxEventType eventType);
+
     wxSize RealizeHelper(wxReadOnlyDC& dc, wxOrientation orientation);
 
     void UpdateBackgroundBitmap(const wxSize& size);
