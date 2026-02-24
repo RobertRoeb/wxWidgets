@@ -2850,16 +2850,10 @@ void wxAuiToolBar::OnRightDown(wxMouseEvent& evt)
             return;
     }
 
-    if (m_overflowSizerItem && m_art)
+    if (m_overflowSizerItem && m_overflowVisible && m_art)
     {
-        int overflowSize = m_art->GetElementSizeForWindow(wxAUI_TBART_OVERFLOW_SIZE, this);
-        if (overflowSize > 0 &&
-            evt.m_x > cli_rect.width - overflowSize &&
-            evt.m_y >= 0 &&
-            evt.m_y < cli_rect.height)
-        {
+        if (GetOverflowRect().Contains(evt.GetX(), evt.GetY()))
             return;
-        }
     }
 
     m_actionPos = wxPoint(evt.GetX(), evt.GetY());
@@ -2922,16 +2916,10 @@ void wxAuiToolBar::OnMiddleDown(wxMouseEvent& evt)
             return;
     }
 
-    if (m_overflowSizerItem && m_art)
+    if (m_overflowSizerItem && m_overflowVisible && m_art)
     {
-        int overflowSize = m_art->GetElementSizeForWindow(wxAUI_TBART_OVERFLOW_SIZE, this);
-        if (overflowSize > 0 &&
-            evt.m_x > cli_rect.width - overflowSize &&
-            evt.m_y >= 0 &&
-            evt.m_y < cli_rect.height)
-        {
+        if (GetOverflowRect().Contains(evt.GetX(), evt.GetY()))
             return;
-        }
     }
 
     m_actionPos = wxPoint(evt.GetX(), evt.GetY());
