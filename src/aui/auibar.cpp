@@ -2834,7 +2834,7 @@ void wxAuiToolBar::OnRightDown(wxMouseEvent& evt)
     UnsetToolTip();
 }
 
-void wxAuiToolBar::OnRightUp(wxMouseEvent& evt)
+void wxAuiToolBar::DoRightOrMiddleUp(wxMouseEvent& evt, wxEventType eventType)
 {
     if (HasCapture())
         return;
@@ -2853,7 +2853,7 @@ void wxAuiToolBar::OnRightUp(wxMouseEvent& evt)
         toolId = wxNOT_FOUND;
     }
 
-    wxAuiToolBarEvent e(wxEVT_AUITOOLBAR_RIGHT_CLICK, toolId);
+    wxAuiToolBarEvent e(eventType, toolId);
     e.SetEventObject(this);
     e.SetToolId(toolId);
     e.SetClickPoint(m_actionPos);
@@ -2863,6 +2863,11 @@ void wxAuiToolBar::OnRightUp(wxMouseEvent& evt)
     // reset member variables
     m_actionPos = wxPoint(-1,-1);
     m_actionItem = nullptr;
+}
+
+void wxAuiToolBar::OnRightUp(wxMouseEvent& evt)
+{
+    DoRightOrMiddleUp(evt, wxEVT_AUITOOLBAR_RIGHT_CLICK);
 }
 
 void wxAuiToolBar::OnMiddleDown(wxMouseEvent& evt)
@@ -2900,33 +2905,7 @@ void wxAuiToolBar::OnMiddleDown(wxMouseEvent& evt)
 
 void wxAuiToolBar::OnMiddleUp(wxMouseEvent& evt)
 {
-    if (HasCapture())
-        return;
-
-    wxAuiToolBarItem* hitItem;
-    hitItem = FindToolByPosition(evt.GetX(), evt.GetY());
-
-    int toolId;
-    if (m_actionItem && hitItem == m_actionItem)
-    {
-        toolId = m_actionItem->m_toolId;
-    }
-    else
-    {
-        // middle-clicked on the invalid area of the toolbar
-        toolId = wxNOT_FOUND;
-    }
-
-    wxAuiToolBarEvent e(wxEVT_AUITOOLBAR_MIDDLE_CLICK, toolId);
-    e.SetEventObject(this);
-    e.SetToolId(toolId);
-    e.SetClickPoint(m_actionPos);
-    GetEventHandler()->ProcessEvent(e);
-    DoIdleUpdate();
-
-    // reset member variables
-    m_actionPos = wxPoint(-1,-1);
-    m_actionItem = nullptr;
+    DoRightOrMiddleUp(evt, wxEVT_AUITOOLBAR_MIDDLE_CLICK);
 }
 
 void wxAuiToolBar::OnMotion(wxMouseEvent& evt)
