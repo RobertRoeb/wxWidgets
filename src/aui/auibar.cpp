@@ -2244,23 +2244,23 @@ int wxAuiToolBar::GetOverflowState() const
 
 wxRect wxAuiToolBar::GetOverflowRect() const
 {
-    wxRect cli_rect(wxPoint(0,0), GetClientSize());
-    wxRect overflow_rect = m_overflowSizerItem->GetRect();
+    const wxSize cli_size = GetClientSize();
+    wxRect overflow_rect;
     int overflow_size = m_art->GetElementSizeForWindow(wxAUI_TBART_OVERFLOW_SIZE, this);
 
     if (m_orientation == wxVERTICAL)
     {
-        overflow_rect.y = cli_rect.height - overflow_size;
+        overflow_rect.y = cli_size.y - overflow_size;
         overflow_rect.x = 0;
-        overflow_rect.width = cli_rect.width;
+        overflow_rect.width = cli_size.x;
         overflow_rect.height = overflow_size;
     }
     else
     {
-        overflow_rect.x = cli_rect.width - overflow_size;
+        overflow_rect.x = cli_size.x - overflow_size;
         overflow_rect.y = 0;
         overflow_rect.width = overflow_size;
-        overflow_rect.height = cli_rect.height;
+        overflow_rect.height = cli_size.y;
     }
 
     return overflow_rect;
