@@ -1650,13 +1650,14 @@ void wxAuiToolBar::RefreshOverflowState()
 
 
     // find out the mouse's current position
-    wxPoint pt = ::wxGetMousePosition();
+    const wxMouseState mouseState = ::wxGetMouseState();
+    wxPoint pt = mouseState.GetPosition();
     pt = this->ScreenToClient(pt);
 
     // find out if the mouse cursor is inside the dropdown rectangle
     if (GetOverflowRect().Contains(pt))
     {
-        if (::wxGetMouseState().LeftIsDown())
+        if (mouseState.LeftIsDown())
             overflow_state = wxAUI_BUTTON_STATE_PRESSED;
         else
             overflow_state = wxAUI_BUTTON_STATE_HOVER;
