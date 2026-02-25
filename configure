@@ -977,6 +977,8 @@ Xinerama_LIBS
 Xinerama_CFLAGS
 QT5_LIBS
 QT5_CFLAGS
+QT6_LIBS
+QT6_CFLAGS
 PANGOFT2_LIBS
 PANGOFT2_CFLAGS
 PANGOXFT_LIBS
@@ -1430,6 +1432,8 @@ PANGOXFT_CFLAGS
 PANGOXFT_LIBS
 PANGOFT2_CFLAGS
 PANGOFT2_LIBS
+QT6_CFLAGS
+QT6_LIBS
 QT5_CFLAGS
 QT5_LIBS
 Xinerama_CFLAGS
@@ -2478,6 +2482,8 @@ Some influential environment variables:
               C compiler flags for PANGOFT2, overriding pkg-config
   PANGOFT2_LIBS
               linker flags for PANGOFT2, overriding pkg-config
+  QT6_CFLAGS  C compiler flags for QT6, overriding pkg-config
+  QT6_LIBS    linker flags for QT6, overriding pkg-config
   QT5_CFLAGS  C compiler flags for QT5, overriding pkg-config
   QT5_LIBS    linker flags for QT5, overriding pkg-config
   Xinerama_CFLAGS
@@ -29655,6 +29661,66 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         else
 
 pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport" >&5
+$as_echo_n "checking for Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport... " >&6; }
+
+if test -n "$QT6_CFLAGS"; then
+    pkg_cv_QT6_CFLAGS="$QT6_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_QT6_CFLAGS=`$PKG_CONFIG --cflags "Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport" 2>/dev/null`
+              test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$QT6_LIBS"; then
+    pkg_cv_QT6_LIBS="$QT6_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_QT6_LIBS=`$PKG_CONFIG --libs "Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport" 2>/dev/null`
+              test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+            QT6_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport" 2>&1`
+        else
+            QT6_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport" 2>&1`
+        fi
+    # Put the nasty error message in config.log where it belongs
+    echo "$QT6_PKG_ERRORS" >&5
+
+
+
+pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport" >&5
 $as_echo_n "checking for Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport... " >&6; }
 
@@ -29713,14 +29779,14 @@ fi
     echo "$QT5_PKG_ERRORS" >&5
 
 
-                    as_fn_error $? "Qt5 libraries are not available" "$LINENO" 5
+                            as_fn_error $? "Neither Qt6 nor Qt5 libraries are available" "$LINENO" 5
 
 
 elif test $pkg_failed = untried; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
-                    as_fn_error $? "Qt5 libraries are not available" "$LINENO" 5
+                            as_fn_error $? "Neither Qt6 nor Qt5 libraries are available" "$LINENO" 5
 
 
 else
@@ -29729,9 +29795,113 @@ else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
-                TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT5_CFLAGS}"
-                GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT5_LIBS}"
-                if `pkg-config --variable qt_config Qt5Core | grep "reduce_relocations" >/dev/null`; then
+                        TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT5_CFLAGS}"
+                        GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT5_LIBS}"
+                        if `pkg-config --variable qt_config Qt5Core | grep "reduce_relocations" >/dev/null`; then
+                                                        wxUSE_PIC=yes
+                        fi
+
+fi
+
+
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport" >&5
+$as_echo_n "checking for Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport... " >&6; }
+
+if test -n "$QT5_CFLAGS"; then
+    pkg_cv_QT5_CFLAGS="$QT5_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_QT5_CFLAGS=`$PKG_CONFIG --cflags "Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport" 2>/dev/null`
+              test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$QT5_LIBS"; then
+    pkg_cv_QT5_LIBS="$QT5_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_QT5_LIBS=`$PKG_CONFIG --libs "Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport" 2>/dev/null`
+              test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+            QT5_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport" 2>&1`
+        else
+            QT5_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport" 2>&1`
+        fi
+    # Put the nasty error message in config.log where it belongs
+    echo "$QT5_PKG_ERRORS" >&5
+
+
+                            as_fn_error $? "Neither Qt6 nor Qt5 libraries are available" "$LINENO" 5
+
+
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+                            as_fn_error $? "Neither Qt6 nor Qt5 libraries are available" "$LINENO" 5
+
+
+else
+    QT5_CFLAGS=$pkg_cv_QT5_CFLAGS
+    QT5_LIBS=$pkg_cv_QT5_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+                        TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT5_CFLAGS}"
+                        GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT5_LIBS}"
+                        if `pkg-config --variable qt_config Qt5Core | grep "reduce_relocations" >/dev/null`; then
+                                                        wxUSE_PIC=yes
+                        fi
+
+fi
+
+
+else
+    QT6_CFLAGS=$pkg_cv_QT6_CFLAGS
+    QT6_LIBS=$pkg_cv_QT6_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+                TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT6_CFLAGS}"
+                GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT6_LIBS}"
+                if `pkg-config --variable qt_config Qt6Core | grep "reduce_relocations" >/dev/null`; then
                                         wxUSE_PIC=yes
                 fi
 
