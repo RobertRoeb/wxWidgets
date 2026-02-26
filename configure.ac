@@ -3303,18 +3303,31 @@ installed, where VER is 2, 3 or 4.
             AC_MSG_ERROR([specify QT5_CUSTOM_DIR or make sure pkg-config is available to search for Qt5 libraries])
 
         else
-            PKG_CHECK_MODULES(QT5,
-                          [Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport],
+            PKG_CHECK_MODULES(QT6,
+                          [Qt6Core Qt6Widgets Qt6Gui Qt6OpenGL Qt6OpenGLWidgets Qt6Test Qt6PrintSupport],
                 [
-                TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT5_CFLAGS}"
-                GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT5_LIBS}"
-                if `pkg-config --variable qt_config Qt5Core | grep "reduce_relocations" >/dev/null`; then
+                TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT6_CFLAGS}"
+                GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT6_LIBS}"
+                if `pkg-config --variable qt_config Qt6Core | grep "reduce_relocations" >/dev/null`; then
                     dnl build with position independent code if Qt needs it
                     wxUSE_PIC=yes
                 fi
                 ],
                 [
-                    AC_MSG_ERROR([Qt5 libraries are not available])
+                    PKG_CHECK_MODULES(QT5,
+                                  [Qt5Core Qt5Widgets Qt5Gui Qt5OpenGL Qt5Test Qt5PrintSupport],
+                        [
+                        TOOLKIT_INCLUDE="${TOOLKIT_INCLUDE} ${QT5_CFLAGS}"
+                        GUI_TK_LIBRARY="${GUI_TK_LIBRARY} ${QT5_LIBS}"
+                        if `pkg-config --variable qt_config Qt5Core | grep "reduce_relocations" >/dev/null`; then
+                            dnl build with position independent code if Qt needs it
+                            wxUSE_PIC=yes
+                        fi
+                        ],
+                        [
+                            AC_MSG_ERROR([Neither Qt6 nor Qt5 libraries are available])
+                        ]
+                    )
                 ]
             )
         fi
