@@ -3939,7 +3939,7 @@ namespace
 class wxAuiLayoutObject
 {
 public:
-    enum
+    enum DockDir
     {
         DockDir_Center,
         DockDir_Left,
@@ -4002,7 +4002,7 @@ public:
 
     wxSize m_size;
     const wxAuiPaneInfo *m_pInfo;
-    unsigned char m_dir;
+    DockDir m_dir;
 
     /*
         As the calculation is done from the inner to the outermost pane, the
