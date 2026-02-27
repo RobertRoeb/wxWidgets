@@ -843,6 +843,12 @@ wxAuiDockArt* wxAuiManager::GetArtProvider() const
     return m_art;
 }
 
+wxSize wxAuiManager::GetMinPaneSize() const
+{
+    // This is pretty arbitrary, should we make it configurable?
+    return wxWindow::FromDIP(wxSize(10, 10), m_frame);
+}
+
 void wxAuiManager::AllowDocksForMinPanes(int directions)
 {
     wxCHECK_RET( directions, "Must specify at least one direction" );
@@ -1136,6 +1142,183 @@ bool wxAuiManager::InsertPane(wxWindow* window, const wxAuiPaneInfo& paneInfo,
     return true;
 }
 
+wxSize wxAuiManager::CalculateNewSplitSize() const
+{
+    // Don't do anything if we're not fully initialized yet.
+    if ( !m_frame || m_docks.empty() )
+        return GetMinPaneSize();
+
+    // Calculate the number of vertical and horizontal rows that we have.
+    int numColumns = 0;
+    int numRows = 0;
+
+    // We could have called FindDocks() multiple times here, but it is more
+    // efficient to count the docks ourselves just once.
+    for ( const auto& d : m_docks )
+    {
+        switch ( d.dock_direction )
+        {
+            case wxAUI_DOCK_LEFT:
+            case wxAUI_DOCK_RIGHT:
+                numColumns++;
+                break;
+
+            case wxAUI_DOCK_TOP:
+            case wxAUI_DOCK_BOTTOM:
+                numRows++;
+                break;
+
+            case wxAUI_DOCK_CENTER:
+                // Center dock counts as both a row and a column.
+                numColumns++;
+                numRows++;
+                break;
+
+            case wxAUI_DOCK_NONE:
+                wxFAIL_MSG( "Unexpected dock direction when calculating new split size" );
+        }
+    }
+
+    // We don't know if the new split is going to be horizontal or vertical,
+    // but it doesn't matter because the other size component won't be used, so
+    // we can just set each of them as if the split was in that direction.
+    wxSize size = m_frame->GetClientSize();
+
+    // When we have only one pane, the new split should be half of the total
+    // available size, hence +1.
+    size.x /= numColumns + 1;
+    size.y /= numRows + 1;
+
+    // Always use some minimum size to avoid creating too small panes or
+    // showing tiny hint window (because this function is also used to
+    // determine its size).
+    size.IncTo(GetMinPaneSize());
+
+    return size;
+}
+
+bool
+wxAuiManager::SplitPane(wxWindow* window,
+                        wxWindow* newWindow,
+                        int direction,
+                        const wxPoint& dropPos)
+{
+    const wxAuiPaneInfo& paneOrig = GetPane(window);
+    wxCHECK_MSG( paneOrig.IsOk(), false, "Window being split must be present" );
+
+    wxAuiPaneInfo paneInfo = wxAuiPaneInfo().CaptionVisible(false);
+
+    wxPoint defaultDropPos;
+    const wxSize sizeWindow = m_frame->GetClientSize();
+
+    if (direction == wxLEFT)
+    {
+        paneInfo.Left();
+        defaultDropPos = wxPoint(0, sizeWindow.y/2);
+    }
+    else if (direction == wxRIGHT)
+    {
+        paneInfo.Right();
+        defaultDropPos = wxPoint(sizeWindow.x, sizeWindow.y/2);
+    }
+    else if (direction == wxTOP)
+    {
+        paneInfo.Top();
+        defaultDropPos = wxPoint(sizeWindow.x/2, 0);
+    }
+    else if (direction == wxBOTTOM)
+    {
+        paneInfo.Bottom();
+        defaultDropPos = wxPoint(sizeWindow.x/2, sizeWindow.y);
+    }
+
+    // Get the new split size before adding the pane, as this would change it.
+    const wxSize size = CalculateNewSplitSize();
+
+    AddPane(newWindow, paneInfo,
+            dropPos != wxDefaultPosition ? dropPos : defaultDropPos);
+
+    // The direction specified in the pane info may be overridden by the drop
+    // position, so get the real direction of the new pane now.
+    bool adjustHorz = false;
+    bool adjustVert = false;
+    switch ( GetPane(newWindow).dock_direction )
+    {
+        case wxAUI_DOCK_LEFT:
+        case wxAUI_DOCK_RIGHT:
+            adjustHorz = true;
+            break;
+
+        case wxAUI_DOCK_TOP:
+        case wxAUI_DOCK_BOTTOM:
+            adjustVert = true;
+            break;
+
+        case wxAUI_DOCK_CENTER:
+        case wxAUI_DOCK_NONE:
+            wxFAIL_MSG( "Unexpected dock direction for new pane after split" );
+    }
+
+    // Adjust all the existing docks to have the same size as the new one in
+    // the split direction.
+    for ( auto& d : m_docks )
+    {
+        switch ( d.dock_direction )
+        {
+            case wxAUI_DOCK_LEFT:
+            case wxAUI_DOCK_RIGHT:
+                if ( adjustHorz )
+                    d.size = size.x;
+                break;
+
+            case wxAUI_DOCK_TOP:
+            case wxAUI_DOCK_BOTTOM:
+                if ( adjustVert )
+                    d.size = size.y;
+                break;
+
+            case wxAUI_DOCK_CENTER:
+                d.size = adjustHorz ? size.x : size.y;
+                break;
+
+            case wxAUI_DOCK_NONE:
+                wxFAIL_MSG( "Unexpected dock direction when calculating new split size" );
+        }
+    }
+
+    // And if we need to create a new dock for the new pane, set its size to be
+    // the same too.
+    //
+    // Note: this is similar to the code in LayoutAll() and we could also call
+    // Update() to do this, but then we'd need to call it again to take the
+    // changed dock size into account, so we prefer to set the size here to
+    // avoid an extra call to Update().
+    //
+    // Also note that it is _not_ sufficient to check if the dock is going to
+    // be created for the new pane, in some layouts it can go into an existing
+    // dock and a new dock is created for an existing pane, so we really need
+    // to iterate over all of them.
+    for ( const auto& p : m_panes )
+    {
+        if ( FindDocks(m_docks,
+                       p.dock_direction,
+                       p.dock_layer,
+                       p.dock_row,
+                       FindDocksFlags::OnlyFirst).IsEmpty() )
+        {
+            wxAuiDockInfo d;
+            d.dock_direction = p.dock_direction;
+            d.dock_layer = p.dock_layer;
+            d.dock_row = p.dock_row;
+            d.size = adjustHorz ? size.x : size.y;
+            m_docks.Add(d);
+        }
+    }
+
+    Update();
+
+    return true;
+}
 
 // DetachPane() removes a pane from the frame manager.  This
 // method will not destroy the window that is removed.
@@ -2270,9 +2453,7 @@ void wxAuiManager::LayoutAddPane(wxSizer* cont,
 
     if (min_size != wxDefaultSize)
     {
-        vert_pane_sizer->SetItemMinSize(
-                        vert_pane_sizer->GetChildren().GetCount()-1,
-                        min_size.x, min_size.y);
+        sizer_item->SetMinSize(min_size);
     }
 
 
@@ -2484,6 +2665,10 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
             // the contained windows may have been resized
             dock.size = 0;
         }
+        //else: non-fixed docks must keep their size to allow resizing them
+        // interactively, if we reset their size too here, they would always
+        // have the size determined by their contents and drag-resizing them
+        // wouldn't work
     }
 
 
@@ -2509,6 +2694,14 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
             if ( dock->size == 0 )
                 dock->size = p.dock_size;
         }
+
+        if ( !p.IsDocked() || !p.IsShown() )
+        {
+            // remove the pane from any existing docks
+            RemovePaneFromDocks(docks, p);
+            continue;
+        }
+
         if ( !dock )
         {
             // dock was not found, so we need to create a new one
@@ -2522,22 +2715,13 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
         }
 
 
-        if (p.IsDocked() && p.IsShown())
-        {
-            // remove the pane from any existing docks except this one
-            RemovePaneFromDocks(docks, p, dock);
+        // remove the pane from any existing docks except this one
+        RemovePaneFromDocks(docks, p, dock);
 
-            // pane needs to be added to the dock,
-            // if it doesn't already exist
-            if (!FindPaneInDock(*dock, p.window))
-                dock->panes.Add(&p);
-        }
-        else
-        {
-            // remove the pane from any existing docks
-            RemovePaneFromDocks(docks, p);
-        }
-
+        // pane needs to be added to the dock,
+        // if it doesn't already exist
+        if (!FindPaneInDock(*dock, p.window))
+            dock->panes.Add(&p);
     }
 
     // remove any empty docks
@@ -2568,6 +2752,8 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
                     pane_size = pane.min_size;
                 if (pane_size == wxDefaultSize)
                     pane_size = pane.window->GetSize();
+
+                pane_size.IncTo(GetMinPaneSize());
 
                 if (dock.IsHorizontal())
                     size = wxMax(pane_size.y, size);
@@ -2611,9 +2797,6 @@ wxSizer* wxAuiManager::LayoutAll(wxAuiPaneInfoArray& panes,
                 size = wxMin(size, max_dock_y_size);
             else
                 size = wxMin(size, max_dock_x_size);
-
-            // absolute minimum size for a dock is 10 pixels
-            size = wxMax(size, m_frame->FromDIP(10));
 
             dock.size = size;
         }
@@ -4582,22 +4765,6 @@ bool wxAuiManager::DoEndResizeAction(wxMouseEvent& event)
 
         int available_width = client_size.GetWidth() - used_width;
         int available_height = client_size.GetHeight() - used_height;
-
-
-#if wxUSE_STATUSBAR
-        // if there's a status control, the available
-        // height decreases accordingly
-        if (wxDynamicCast(m_frame, wxFrame))
-        {
-            wxFrame* frame = static_cast<wxFrame*>(m_frame);
-            wxStatusBar* status = frame->GetStatusBar();
-            if (status)
-            {
-                wxSize status_client_size = status->GetClientSize();
-                available_height -= status_client_size.GetHeight();
-            }
-        }
-#endif
 
         const wxRect& rect = m_actionPart->dock->rect;
 

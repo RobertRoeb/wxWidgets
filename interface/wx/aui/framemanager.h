@@ -368,6 +368,24 @@ public:
                              const wxPoint& offset = wxPoint{0, 0});
 
     /**
+        Return a reasonable size to use for a new split.
+
+        This function currently calculates the number of columns and rows in
+        the current layout and returns the size of the managed window divided
+        by one more than that number, i.e. returns half of the available size
+        if there is currently just one row or column, a third if there are two
+        rows or columns, and so on.
+
+        The implementation may change in the future, but it will always return
+        some reasonable size to use for a new split.
+
+        @see SplitPane(), wxAuiNotebook::CalculateNewSplitSize()
+
+        @since 3.3.2
+     */
+    wxSize CalculateNewSplitSize() const;
+
+    /**
         Check if a key modifier is pressed (actually ::WXK_CONTROL or
         ::WXK_ALT) while dragging the frame to not dock the window.
     */
@@ -685,6 +703,32 @@ public:
             coordinates, or an empty rectangle to hide the window.
     */
     virtual void ShowHint(const wxRect& rect);
+
+    /**
+        Create a new pane with the given window near an existing pane.
+
+        The size of the new pane is determined by CalculateNewSplitSize() and
+        the existing panes are resized to have the same size in the split
+        direction.
+
+        Note that this function calls Update() internally, so there is no need
+        to call it separately.
+
+        @param window A window already managed by this wxAuiManager identifying
+            the pane to split.
+        @param newWindow The window to be added as a new pane.
+        @param direction The direction where the new pane should be added, one
+            of ::wxLEFT, ::wxRIGHT, ::wxTOP or ::wxBOTTOM.
+        @param dropPos The position where the pane is dropped, if this function
+            is called in response to a drag-and-drop operation. If not
+            specified, the position is determined by @a direction.
+
+        @since 3.3.2
+     */
+    bool SplitPane(wxWindow* window,
+                   wxWindow* newWindow,
+                   int direction,
+                   const wxPoint& dropPos = wxDefaultPosition);
 
     /**
         Mostly used internally to define the drag action parameters.
