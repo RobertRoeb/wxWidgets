@@ -141,6 +141,10 @@ Changes in behaviour not resulting in compilation errors
   as const reference from its own functions, please change the return type of
   the function to wxString to fix this.
 
+- wxWindow::Raise() doesn't show the window in all the ports now, just as it
+  already didn't do it in wxMSW. Call Show() explicitly before Raise() if
+  necessary.
+
 
 Changes in behaviour which may result in build errors
 -----------------------------------------------------

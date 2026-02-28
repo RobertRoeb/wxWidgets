@@ -1784,6 +1784,9 @@ wxWindow *wxWindowBase::DoFindFocus()
 // Raise the window to the top of the Z order
 void wxWindowMac::Raise()
 {
+    if ( !IsShown() )
+        return;
+
     GetPeer()->Raise();
 }
 
