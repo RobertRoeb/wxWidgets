@@ -3021,6 +3021,10 @@ public:
         a window requested to be raised in some other way, e.g. by flashing its
         icon if it is minimized.
 
+        If the window is currently hidden, this function does *not* show it
+        automatically, it will only appear on top of the other windows when it
+        is shown.
+
         @remarks
         This function only works for wxTopLevelWindow-derived classes.
 

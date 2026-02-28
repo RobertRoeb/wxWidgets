@@ -575,6 +575,9 @@ bool wxWindowQt::Reparent( wxWindowBase *parent )
 
 void wxWindowQt::Raise()
 {
+    if ( !IsShown() )
+        return;
+
     GetHandle()->raise();
 }
 

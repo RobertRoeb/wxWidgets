@@ -5437,6 +5437,9 @@ void wxWindowGTK::Raise()
 {
     wxCHECK_RET( (m_widget != nullptr), wxT("invalid window") );
 
+    if (!m_isShown)
+        return;
+
     if (auto const window = GTKGetMainWindow())
     {
         gdk_window_raise(window);
