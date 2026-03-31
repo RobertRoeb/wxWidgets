@@ -2847,6 +2847,11 @@ wxWidgetImpl( peer, flags )
     m_osxView = w;
     m_osxClipView = nil;
 
+    m_insetLeft     = -1;
+    m_insetRight    = -1;
+    m_insetTop      = -1;
+    m_insetBottom   = -1;
+
     // check if the user wants to create the control initially hidden
     if ( !peer->IsShown() )
         SetVisibility(false);
@@ -3409,11 +3414,21 @@ void wxWidgetCocoaImpl::GetContentArea( int&left, int &top, int &width, int &hei
 
 void wxWidgetCocoaImpl::GetLayoutInset(int &left , int &top , int &right, int &bottom) const
 {
-    NSEdgeInsets insets = [m_osxView alignmentRectInsets];
-    left = insets.left;
-    top = insets.top;
-    right = insets.right;
-    bottom = insets.bottom;
+    if (m_insetLeft == -1)
+    {
+        // It's not entirely clear if/when this needs to be invalidated.
+        // For most (all?) normal controls/views, this is effectively static.
+        NSEdgeInsets insets = [m_osxView alignmentRectInsets];
+        m_insetLeft     = insets.left;
+        m_insetRight    = insets.right;
+        m_insetTop      = insets.top;
+        m_insetBottom   = insets.bottom;
+    }
+
+    left = m_insetLeft;
+    top = m_insetTop;
+    right = m_insetRight;
+    bottom = m_insetBottom;
 }
 
 namespace
