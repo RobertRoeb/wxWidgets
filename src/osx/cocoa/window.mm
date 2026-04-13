@@ -3433,6 +3433,11 @@ void wxWidgetCocoaImpl::GetLayoutInset(int &left , int &top , int &right, int &b
     bottom = m_insetBottom;
 }
 
+void wxWidgetCocoaImpl::InvalidateLayoutInset() const {
+    // GetLayoutInset() above only checks `m_insetLeft` for caching.
+    m_insetLeft = -1;
+}
+
 namespace
 {
 
