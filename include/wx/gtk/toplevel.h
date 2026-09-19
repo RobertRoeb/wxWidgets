@@ -111,6 +111,7 @@ public:
     void GTKHandleMapped();
 
     void GTKConfigureEvent(int x, int y);
+    void GTKScaleFactorChanged();
 
     // do *not* call this to iconize the frame, this is a private function!
     void SetIconizeState(bool iconic);
