@@ -1085,21 +1085,6 @@ bool wxEventHashTable::HandleEvent(wxEvent &event, wxEvtHandler *self)
     return false;
 }
 
-bool wxEventHashTable::HasHandleForEventType(wxEventType eventType)
-{
-    if (m_rebuildHash)
-    {
-        InitHashTable();
-        m_rebuildHash = false;
-    }
-
-    if (!m_eventTypeTable)
-        return false;
-
-    const EventTypeTablePointer eTTnode = m_eventTypeTable[eventType % m_size];
-    return (eTTnode && eTTnode->eventType == eventType);
-}
-
 void wxEventHashTable::InitHashTable()
 {
     // Loop over the event tables and all its base tables.
@@ -1660,11 +1645,6 @@ bool wxEvtHandler::DoTryChain(wxEvent& event)
     }
 
     return false;
-}
-
-bool wxEvtHandler::HasHandleForEventType(wxEventType eventType)
-{
-    return GetEventHashTable().HasHandleForEventType(eventType);
 }
 
 bool wxEvtHandler::TryHereOnly(wxEvent& event)
