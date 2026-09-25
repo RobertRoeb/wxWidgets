@@ -380,6 +380,22 @@ bool wxWindowMac::MacIsUserPane() const
 
 //
 //
+static bool LocalHasHandlerForEventType(  const wxEventTable *table, wxEventType eventType )
+{
+    while (table)
+    {
+        const wxEventTableEntry *entry = table->entries;
+        while (entry->m_fn != nullptr)
+        {
+            if (entry->m_eventType == eventType)
+                return true;
+            entry++;
+        }
+
+        table = table->baseTable;
+    }
+    return false;
+}
 
 // Constructor
 bool wxWindowMac::Create(wxWindowMac *parent,
@@ -409,6 +425,9 @@ bool wxWindowMac::Create(wxWindowMac *parent,
             m_peer->UseClippingView();
     }
 
+    if (LocalHasHandlerForEventType( GetEventTable(), wxEVT_PAINT)) {
+        GetPeer()->PaintHandlerAdded();
+    }
     wxWindowCreateEvent event((wxWindow*)this);
     GetEventHandler()->AddPendingEvent(event);
 
@@ -833,10 +852,10 @@ void wxWindowMac::DoGetClientSize( int *x, int *y ) const
 
     GetPeer()->GetContentArea( left, top, ww, hh );
 #if wxUSE_SCROLLBAR
-    if (m_hScrollBar  && m_hScrollBar->IsShown() )
+    if (m_hScrollBar && m_hScrollBar->IsShown())
         hh -= m_hScrollBar->GetSize().y ;
 
-    if (m_vScrollBar  && m_vScrollBar->IsShown() )
+    if (m_vScrollBar && m_vScrollBar->IsShown())
         ww -= m_vScrollBar->GetSize().x ;
 
 #endif
@@ -2035,7 +2054,6 @@ bool wxWindowMac::MacDoRedraw( long time )
     if ( !m_updateRegion.Empty() )
     {
         // paint the window itself
-
         wxPaintEvent event(this);
         event.SetTimestamp(time);
         handled = HandleWindowEvent(event);
@@ -2349,15 +2367,15 @@ long wxWindowMac::MacRemoveBordersFromStyle( long style )
     return style & ~wxBORDER_MASK ;
 }
 
-void wxWindowMac::DoBind(int winid, int lastId, wxEventType eventType,
-                   wxEventFunctor *func, wxObject* userData )
+bool wxWindowMac::OnDynamicBind(wxDynamicEventTableEntry& entry)
 {
-    wxEvtHandler::DoBind( winid, lastId, eventType, func, userData );
-    if (eventType == wxEVT_PAINT)
+    if (entry.m_eventType == wxEVT_PAINT)
     {
         // Give the peer a change to override NSView's drawRect
         GetPeer()->PaintHandlerAdded();
     }
+
+    return true;
 }
 
 void wxWindowMac::OnMouseEvent( wxMouseEvent &event )

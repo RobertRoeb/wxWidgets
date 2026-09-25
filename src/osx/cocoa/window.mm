@@ -4479,9 +4479,19 @@ void wxWidgetCocoaImpl::ClipsToBounds(bool clip)
 
 void wxWidgetCocoaImpl::PaintHandlerAdded()
 {
+    // Not needed without a user pane
     if (!IsUserPane()) return;
-    NSView * view =  (NSView*) m_osxView;
-    object_setClass( view, [wxNSViewWithDrawing class] );
+
+    if (m_wxPeer->IsKindOf(wxCLASSINFO(wxSpinCtrl))
+      || m_wxPeer->IsKindOf(wxCLASSINFO(wxSpinCtrlDouble)))
+    {
+        // The spinctrl classes have paint event handlers, but
+        // using them break the appearance on wxMac
+        return;
+    }
+
+    // Change class on the fly to allow drawing
+    object_setClass( (NSView*) m_osxView, [wxNSViewWithDrawing class] );
 }
 
 //
@@ -4510,51 +4520,29 @@ wxWidgetImpl* wxWidgetImpl::CreateUserPane( wxWindowMac* wxpeer, wxWindowMac* WX
 {
     NSRect r = wxOSXGetFrameForControl( wxpeer, pos , size ) ;
 
-    wxWidgetCocoaImpl* c = nullptr;
-
-    //  Avoid macOS 26 Tahoe triggers legacy rendering with brown background
-    if (wxpeer->IsKindOf(wxCLASSINFO(wxSpinCtrl))
-      || wxpeer->IsKindOf(wxCLASSINFO(wxSpinCtrlDouble)))
+    NSView* v = nullptr;
+    if (wxpeer->HasFlag(wxTRANSLUCENT_WINDOW))
     {
-        wxNSView* v = [[wxNSView alloc] initWithFrame:r];
-        c = new wxWidgetCocoaImpl( wxpeer, v, Widget_IsUserPane );
+        wxNSVisualEffectView *visualEffectView = [[wxNSVisualEffectView alloc] initWithFrame:r];
+
+        visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        visualEffectView.material = NSVisualEffectMaterialSidebar;
+        visualEffectView.state = NSVisualEffectStateActive;
+        visualEffectView.wantsLayer = YES;
+        visualEffectView.layer.cornerRadius = 10.0;
+        visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
+        wxNSView *wxnsview = [[wxNSView alloc] initWithFrame:r];
+        [visualEffectView addSubview:wxnsview];
+
+        v = visualEffectView;
     }
     else
-    {
-        // Create wxNSView without overriding drawRect
-        NSView* v = nullptr;
-        if (wxpeer->HasHandleForEventType(wxEVT_PAINT))
-            v = [[wxNSViewWithDrawing alloc] initWithFrame:r];
-        else
-        {
-            if (wxpeer->HasFlag(wxTRANSLUCENT_WINDOW))
-            {
-                wxNSVisualEffectView *visualEffectView = [[wxNSVisualEffectView alloc] initWithFrame:r];
-
-                visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-                visualEffectView.material = NSVisualEffectMaterialSidebar;
-                visualEffectView.state = NSVisualEffectStateActive;
-                visualEffectView.wantsLayer = YES;
-                visualEffectView.layer.cornerRadius = 10.0;
-                visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-
-                wxNSView *wxnsview = [[wxNSView alloc] initWithFrame:r];
-                [visualEffectView addSubview:wxnsview];
-
-                v = visualEffectView;
-            }
-            else
-            {            
-                wxNSView * wxnsview = [[wxNSView alloc] initWithFrame:r];
-                v = wxnsview;
-            }
-
-        }
-
-
-        c = new wxWidgetCocoaImpl( wxpeer, v, Widget_IsUserPane );
+    {            
+        wxNSView * wxnsview = [[wxNSView alloc] initWithFrame:r];
+        v = wxnsview;
     }
-    return c;
+    return new wxWidgetCocoaImpl( wxpeer, v, Widget_IsUserPane );
 }
 
 wxWidgetImpl* wxWidgetImpl::CreateContentView( wxNonOwnedWindow* now )

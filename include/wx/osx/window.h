@@ -159,11 +159,7 @@ public:
     // --------------
 
     // override this to catch binding to wxEVT_PAINT
-    virtual void DoBind(int winid,
-                   int lastId,
-                   wxEventType eventType,
-                   wxEventFunctor *func,
-                   wxObject* userData = nullptr) override;
+    virtual bool OnDynamicBind(wxDynamicEventTableEntry& entry) override;
 
     void OnMouseEvent( wxMouseEvent &event );
 
