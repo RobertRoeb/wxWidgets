@@ -1466,6 +1466,9 @@ wxALLOW_COMBINING_ENUMS(wxSizerFlagBits, wxStretch)
 /* This style is obsolete and doesn't do anything. */
 #define wxTRANSPARENT_WINDOW    0
 
+/* Translucent window */
+#define wxTRANSLUCENT_WINDOW    0x00100000
+
 /*  Add this style to a panel to get tab traversal working outside of dialogs */
 /*  (on by default for wxPanel, wxDialog, wxScrolledWindow) */
 #define wxTAB_TRAVERSAL         0x00080000

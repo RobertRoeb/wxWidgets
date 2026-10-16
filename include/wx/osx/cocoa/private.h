@@ -172,6 +172,7 @@ public :
     void                SetAccessibilityTitleElement(wxWidgetImpl* title) override;
     bool                HasAccessibilityTitle() const override;
 
+    virtual             void PaintHandlerAdded() override;
     void                InstallEventHandler( WXWidget control = nullptr ) override;
     bool                EnableTouchEvents(int eventsMask) override;
 

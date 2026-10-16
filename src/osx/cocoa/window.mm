@@ -30,6 +30,7 @@
 #include "wx/private/textinput.h"
 
 #include "wx/evtloop.h"
+#include "wx/spinctrl.h"
 
 #if wxUSE_CARET
     #include "wx/caret.h"
@@ -952,12 +953,6 @@ static void SetDrawingEnabledIfFrozenRecursive(wxWidgetCocoaImpl *impl, bool ena
 
 + (void)initialize
 {
-    static BOOL initialized = NO;
-    if (!initialized)
-    {
-        initialized = YES;
-        wxOSXCocoaClassAddWXMethods( self );
-    }
 }
 
 /* idea taken from webkit sources: overwrite the methods that (private) NSToolTipManager will use to attach its tracking rectangle
@@ -1311,6 +1306,47 @@ static long wxOSXGetTextInputPosition(NSUInteger position)
 
 @end // wxNSView(TextInput)
 
+
+
+@interface wxNSViewWithDrawing : wxNSView
+{
+}
+
+@end // wxNSViewWithoutDrawing
+
+@implementation wxNSViewWithDrawing
+
++ (void)initialize
+{
+    static BOOL initialized = NO;
+    if (!initialized)
+    {
+        initialized = YES;
+        wxOSXCocoaClassAddWXMethods( self );
+    }
+}
+
+@end // wxNSViewWithDrawing
+
+@interface wxNSViewWithoutDrawing : wxNSView
+{
+}
+
+@end // wxNSViewWithoutDrawing
+
+@implementation wxNSViewWithoutDrawing
+
++ (void)initialize
+{
+    static BOOL initialized = NO;
+    if (!initialized)
+    {
+        initialized = YES;
+        wxOSXCocoaClassAddWXMethods( self, wxOSXSKIP_DRAW );
+    }
+}
+
+@end // wxNSViewWithoutDrawing
 
 //
 // event handlers
@@ -5017,6 +5053,36 @@ bool wxWidgetCocoaImpl::DoesClipToBounds() const
     return m_osxView.clipsToBounds;
 }
 
+void wxWidgetCocoaImpl::PaintHandlerAdded()
+{
+    // Not needed without a user pane
+    if (!IsUserPane()) return;
+
+    if (m_wxPeer->IsKindOf(wxCLASSINFO(wxSpinCtrl))
+      || m_wxPeer->IsKindOf(wxCLASSINFO(wxSpinCtrlDouble)))
+    {
+        // The spinctrl classes have paint event handlers, but
+        // using them break the appearance on wxMac
+        return;
+    }
+
+    // Change class on the fly to allow drawing
+    object_setClass( (NSView*) m_osxView, [wxNSViewWithDrawing class] );
+}
+
+@interface wxNSVisualEffectView : NSVisualEffectView
+
+@end
+
+@implementation wxNSVisualEffectView
+
+- (BOOL)isFlipped
+{
+    return YES;
+}
+
+@end
+
 //
 // Factory methods
 //
@@ -5026,7 +5092,31 @@ wxWidgetImpl* wxWidgetImpl::CreateUserPane( wxWindowMac* wxpeer, wxWindowMac* WX
     long WXUNUSED(style), long WXUNUSED(extraStyle))
 {
     NSRect r = wxOSXGetFrameForControl( wxpeer, pos , size ) ;
-    wxNSView* v = [[wxNSView alloc] initWithFrame:r];
+
+    NSView* v = nullptr;
+    if (wxpeer->HasFlag(wxTRANSLUCENT_WINDOW))
+    {
+        wxNSVisualEffectView *visualEffectView = [[wxNSVisualEffectView alloc] initWithFrame:r];
+
+        visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        visualEffectView.material = NSVisualEffectMaterialSidebar;
+        visualEffectView.state = NSVisualEffectStateActive;
+        visualEffectView.wantsLayer = YES;
+        visualEffectView.layer.cornerRadius = 10.0;
+        visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
+        wxNSView *wxnsview = [[wxNSViewWithoutDrawing alloc] initWithFrame:r];
+        [visualEffectView addSubview:wxnsview];
+
+        v = visualEffectView;
+    }
+    else
+    {            
+        wxNSView * wxnsview = [[wxNSViewWithoutDrawing alloc] initWithFrame:r];
+        v = wxnsview;
+    }
+    return new wxWidgetCocoaImpl( wxpeer, v, Widget_IsUserPane );
+
 
     wxWidgetCocoaImpl* c = new wxWidgetCocoaImpl( wxpeer, v, Widget_IsUserPane );
     return c;
@@ -5051,7 +5141,7 @@ wxWidgetImpl* wxWidgetImpl::CreateContentView( wxNonOwnedWindow* now )
     }
     else
     {
-        wxNSView* v = [[wxNSView alloc] initWithFrame:[[tlw contentView] frame]];
+        wxNSView* v = [[wxNSViewWithoutDrawing alloc] initWithFrame:[[tlw contentView] frame]];
         c = new wxWidgetCocoaImpl( now, v, Widget_IsRoot );
         c->InstallEventHandler();
         [tlw setContentView:v];
