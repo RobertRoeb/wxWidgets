@@ -5055,7 +5055,6 @@ bool wxWidgetCocoaImpl::DoesClipToBounds() const
 
 void wxWidgetCocoaImpl::PaintHandlerAdded()
 {
-    // Not needed without a user pane
     if (!IsUserPane()) return;
 
     if (m_wxPeer->IsKindOf(wxCLASSINFO(wxSpinCtrl))
