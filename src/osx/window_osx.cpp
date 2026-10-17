@@ -433,11 +433,8 @@ bool wxWindowMac::Create(wxWindowMac *parent,
             m_peer->UseClippingView();
     }
 
-    // Try here first, but the event table might not be fully built
     if (HasHandlerForEventType( GetEventTable(), wxEVT_PAINT ))
     {
-        wxString name = GetClassInfo()->GetClassName();
-        printf( "Found it first %s\n", (const char*) name.utf8_str() );
         // Only override drawRect if needed
         GetPeer()->PaintHandlerAdded();
     }
@@ -445,22 +442,7 @@ bool wxWindowMac::Create(wxWindowMac *parent,
     wxWindowCreateEvent event((wxWindow*)this);
     GetEventHandler()->AddPendingEvent(event);
 
-    Bind( wxEVT_CREATE, &wxWindowMac::OnWindowCreate, this );
-
     return true;
-}
-
-void wxWindowMac::OnWindowCreate(wxWindowCreateEvent &WXUNUSED(event))
-{
-    wxString name = GetClassInfo()->GetClassName();
-    printf( "window create %s\n", (const char*) name.utf8_str() );
-    // Try here again as the event table is now fully built
-    if (HasHandlerForEventType( GetEventTable(), wxEVT_PAINT ))
-    {
-        printf( "Found it!\n" );
-        // Only override drawRect if needed
-        GetPeer()->PaintHandlerAdded();
-    }
 }
 
 bool wxWindowMac::OnDynamicBind(wxDynamicEventTableEntry& entry)
